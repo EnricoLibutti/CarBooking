@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Car Booking System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin-top: 50px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Car Booking System</h1>
+    <p class="text-center">Prenota un'auto disponibile per la tua famiglia!</p>
+
+    <!-- Lista delle auto -->
+    <div id="car-list">
+        <h3>Auto Disponibili</h3>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Posti a Sedere</th>
+                <th>Ultimo Uso</th>
+                <th>Azione</th>
+            </tr>
+            </thead>
+            <tbody id="car-table-body">
+            <!-- Le righe delle auto verranno caricate dinamicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Sezione Auto Occupate -->
+    <div id="occupied-cars">
+        <h3>Auto Occupate</h3>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Prenotato Da</th>
+                <th>Data Prenotazione</th>
+                <th>Data Inizio</th>
+                <th>Data Fine</th>
+                <th>Durata</th>
+                <th>Motivazione</th>
+            </tr>
+            </thead>
+            <tbody id="occupied-cars-body">
+            <!-- Le righe delle auto occupate verranno caricate dinamicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Form di prenotazione -->
+    <div id="booking-form" style="display: none;">
+        <h3>Prenota Auto</h3>
+        <form id="booking-form-data">
+            <div class="mb-3">
+                <label for="name" class="form-label">Nome:</label>
+                <input type="text" class="form-control" id="name" required>
+            </div>
+            <div class="mb-3">
+                <label for="startDateTime" class="form-label">Data e Ora di Inizio:</label>
+                <input type="datetime-local" class="form-control" id="startDateTime" required>
+            </div>
+            <div class="mb-3">
+                <label for="endDateTime" class="form-label">Data e Ora di Fine:</label>
+                <input type="datetime-local" class="form-control" id="endDateTime" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
+        </form>
+    </div>
+</div>
+
+<!-- Script per caricare le auto e gestire le prenotazioni -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const carTableBody = document.getElementById("car-table-body");
+        const occupiedCarsBody = document.getElementById("occupied-cars-body");
+        const bookingForm = document.getElementById("booking-form");
+        const bookingFormData = document.getElementById("booking-form-data");
+
+        // Funzione per caricare le auto dal backend
+        async function loadCars() {
+            try {
+                const response = await fetch("/api/cars");
+                const cars = await response.json();
+
+                if (cars.length === 0) {
+                    carTableBody.innerHTML = "<tr><td colspan='4'>Nessuna auto disponibile.</td></tr>";
+                    return;
+                }
+
+                // Popola la tabella con le auto
+                carTableBody.innerHTML = "";
+                cars.forEach(car => {
+                    const row = document.createElement("tr");
+
+                    const nameCell = document.createElement("td");
+                    nameCell.textContent = car.name;
+                    row.appendChild(nameCell);
+
+                    const seatsCell = document.createElement("td");
+                    seatsCell.textContent = car.seats;
+                    row.appendChild(seatsCell);
+
+                    const lastUsedCell = document.createElement("td");
+                    lastUsedCell.textContent = car.lastUsed ? new Date(car.lastUsed).toLocaleString() : "Non utilizzata";
+                    row.appendChild(lastUsedCell);
+
+                    const actionCell = document.createElement("td");
+                    if (car.available) {
+                        const button = document.createElement("button");
+                        button.textContent = "Prenota";
+                        button.className = "btn btn-primary";
+                        button.onclick = () => showBookingForm(car.id);
+                        actionCell.appendChild(button);
+                    } else {
+                        actionCell.textContent = "Non Disponibile";
+                        actionCell.className = "text-danger";
+                    }
+                    row.appendChild(actionCell);
+
+                    carTableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Errore durante il caricamento delle auto:", error);
+            }
+        }
+
+        // Funzione per caricare le auto occupate
+        async function loadOccupiedCars() {
+            try {
+                const response = await fetch("/api/cars/occupied");
+                const occupiedCars = await response.json();
+
+                if (occupiedCars.length === 0) {
+                    occupiedCarsBody.innerHTML = "<tr><td colspan='7'>Nessuna auto occupata.</td></tr>";
+                    return;
+                }
+
+                // Popola la tabella con le auto occupate
+                occupiedCarsBody.innerHTML = "";
+                occupiedCars.forEach(car => {
+                    const row = document.createElement("tr");
+
+                    const nameCell = document.createElement("td");
+                    nameCell.textContent = car.name;
+                    row.appendChild(nameCell);
+
+                    const bookedByNameCell = document.createElement("td");
+                    bookedByNameCell.textContent = car.bookedByName;
+                    row.appendChild(bookedByNameCell);
+
+                    const bookedAtCell = document.createElement("td");
+                    bookedAtCell.textContent = car.bookedAt ? new Date(car.bookedAt).toLocaleString() : "Non applicabile";
+                    row.appendChild(bookedAtCell);
+
+                    const bookingStartCell = document.createElement("td");
+                    bookingStartCell.textContent = car.bookingStart ? new Date(car.bookingStart).toLocaleString() : "Non applicabile";
+                    row.appendChild(bookingStartCell);
+
+                    const bookingEndCell = document.createElement("td");
+                    bookingEndCell.textContent = car.bookingEnd ? new Date(car.bookingEnd).toLocaleString() : "Non applicabile";
+                    row.appendChild(bookingEndCell);
+
+                    const bookedDurationCell = document.createElement("td");
+                    bookedDurationCell.textContent = car.bookedDuration + " ore";
+                    row.appendChild(bookedDurationCell);
+
+                    const reasonCell = document.createElement("td");
+                    reasonCell.textContent = car.bookedForReason;
+                    row.appendChild(reasonCell);
+
+                    occupiedCarsBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Errore durante il caricamento delle auto occupate:", error);
+            }
+        }
+
+        // Mostra il form di prenotazione
+        function showBookingForm(carId) {
+            bookingForm.style.display = "block";
+            bookingFormData.carId = carId;
+        }
+
+        // Nasconde il form di prenotazione
+        function hideBookingForm() {
+            bookingForm.style.display = "none";
+        }
+
+        // Gestisce la conferma della prenotazione
+        bookingFormData.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const carId = this.carId;
+            const name = document.getElementById("name").value;
+            const startDateTime = new Date(document.getElementById("startDateTime").value);
+            const endDateTime = new Date(document.getElementById("endDateTime").value);
+
+            if (startDateTime >= endDateTime) {
+                alert("La data e ora di fine deve essere successiva alla data e ora di inizio.");
+                return;
+            }
+
+            const duration = Math.floor((endDateTime - startDateTime) / (1000 * 60 * 60));
+
+            try {
+                const response = await fetch(`/api/cars/book/${carId}`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, startDateTime, endDateTime, duration }),
+                });
+                const message = await response.text();
+                alert(message);
+                hideBookingForm();
+                loadCars(); // Ricarica la lista delle auto
+                loadOccupiedCars(); // Ricarica la lista delle auto occupate
+            } catch (error) {
+                console.error("Errore durante la prenotazione:", error);
+            }
+        });
+
+        // Carica le auto all'avvio della pagina
+        loadCars();
+        loadOccupiedCars();
+    });
+</script>
+</body>
+</html>
