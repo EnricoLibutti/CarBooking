@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -34,15 +35,15 @@ public class CarController {
             car.setLastUsed(LocalDateTime.now());
             car.setBookedByName(request.getName());
             car.setBookedAt(LocalDateTime.now());
-            car.setBookingStart(car.getLastUsed());
-            car.setBookingEnd(car.getLastUsed().plusHours(request.getDuration()));
-            car.setBookedDuration(request.getDuration());
+            car.setBookingStart(request.getStartDateTime());
+            car.setBookingEnd(request.getEndDateTime());
+            car.setBookedDuration(Math.toIntExact(Duration.between(request.getStartDateTime(), request.getEndDateTime()).toHours()));
             car.setBookedForReason(request.getReason());
-            car.setAvailableUntil(car.getBookingEnd());
+            car.setAvailableUntil(request.getEndDateTime());
             carRepository.save(car);
-            return ResponseEntity.ok("Car booked successfully for " + request.getDuration() + " hours!");
+            return ResponseEntity.ok("Hai prenotato con successo l'auto %s!".formatted(car.getName()));
         }
-        return ResponseEntity.badRequest().body("Car not available!");
+        return ResponseEntity.badRequest().body("Macchina non disponibile!");
     }
 
     // Verifica la disponibilità delle auto
@@ -70,9 +71,9 @@ public class CarController {
             car.setBookedByName(null);
             car.setBookedForReason(null);
             carRepository.save(car);
-            return ResponseEntity.ok("Booking terminated successfully!");
+            return ResponseEntity.ok("Prenotazione terminata!");
         }
-        return ResponseEntity.badRequest().body("Car is not currently booked!");
+        return ResponseEntity.badRequest().body("La prenotazione non esiste!");
     }
 
     @PostMapping("/cancel/{id}")
@@ -84,9 +85,9 @@ public class CarController {
             car.setBookedByName(null);
             car.setBookedForReason(null);
             carRepository.save(car);
-            return ResponseEntity.ok("Booking cancelled successfully!");
+            return ResponseEntity.ok("Prenotazione annullata!");
         }
-        return ResponseEntity.badRequest().body("Car is not currently booked!");
+        return ResponseEntity.badRequest().body("La prenotazione non esiste!");
     }
 
     @GetMapping("/calendar")

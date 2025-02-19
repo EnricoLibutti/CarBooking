@@ -104,6 +104,10 @@
                 <label for="endDateTime" class="form-label">Data e Ora di Fine:</label>
                 <input type="datetime-local" class="form-control" id="endDateTime" required>
             </div>
+            <div class="mb-3">
+                <label for="reason" class="form-label">Motivazione:</label>
+                <textarea class="form-control" id="reason" rows="3" required></textarea>
+            </div>
             <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
         </form>
     </div>
@@ -234,6 +238,7 @@
             const name = document.getElementById("name").value;
             const startDateTime = new Date(document.getElementById("startDateTime").value);
             const endDateTime = new Date(document.getElementById("endDateTime").value);
+            const reason = document.getElementById("reason").value;
 
             if (startDateTime >= endDateTime) {
                 alert("La data e ora di fine deve essere successiva alla data e ora di inizio.");
@@ -248,7 +253,7 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ name, startDateTime, endDateTime, duration }),
+                    body: JSON.stringify({ name, startDateTime, endDateTime, duration, reason }),
                 });
                 const message = await response.text();
                 alert(message);
