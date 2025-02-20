@@ -1,3 +1,4 @@
+/*
 package me.enrico.carbooking.task;
 
 
@@ -26,3 +27,4 @@ public class ScheduledTasks {
         });
     }
 }
+*/

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,10 +30,11 @@ public class CarController {
     public ResponseEntity<String> bookCar(@PathVariable Long id, @RequestBody CarBookingRequest request) {
         Car car = carRepository.findById(id).orElse(null);
         if (car != null && car.isAvailable()) {
+            LocalDateTime now = LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toLocalDateTime();
             car.setAvailable(false);
-            car.setLastUsed(LocalDateTime.now());
+            car.setLastUsed(now);
             car.setBookedByName(request.getName());
-            car.setBookedAt(LocalDateTime.now());
+            car.setBookedAt(now);
             car.setBookingStart(request.getStartDateTime());
             car.setBookingEnd(request.getEndDateTime());
             car.setBookedDuration(Math.toIntExact(Duration.between(request.getStartDateTime(), request.getEndDateTime()).toHours()));
@@ -46,7 +48,7 @@ public class CarController {
 
     @GetMapping("/availability")
     public List<Car> checkAvailability() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toLocalDateTime();
         return carRepository.findAll().stream()
                 .filter(car -> car.getAvailableUntil() == null || car.getAvailableUntil().isBefore(now))
                 .peek(car -> {
@@ -89,7 +91,7 @@ public class CarController {
 
     @GetMapping("/occupied")
     public List<Car> getCurrentlyOccupiedCars() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toLocalDateTime();
         return carRepository.findAll().stream()
                 .filter(car -> !car.isAvailable()
                         && car.getBookingStart().isBefore(now)
@@ -99,7 +101,7 @@ public class CarController {
 
     @GetMapping("/future-bookings")
     public List<Car> getFutureBookedCars() {
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toLocalDateTime();
         return carRepository.findAll().stream()
                 .filter(car -> !car.isAvailable()
                         && car.getBookingStart().isAfter(now))
