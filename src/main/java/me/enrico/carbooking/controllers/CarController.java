@@ -20,13 +20,11 @@ public class CarController {
     @Autowired
     private CarRepository carRepository;
 
-    // Ottieni tutte le auto disponibili
     @GetMapping
     public List<Car> getAllCars() {
         return carRepository.findByAvailable(true);
     }
 
-    // Prenota un'auto
     @PostMapping("/book/{id}")
     public ResponseEntity<String> bookCar(@PathVariable Long id, @RequestBody CarBookingRequest request) {
         Car car = carRepository.findById(id).orElse(null);
@@ -46,7 +44,6 @@ public class CarController {
         return ResponseEntity.badRequest().body("Macchina non disponibile!");
     }
 
-    // Verifica la disponibilità delle auto
     @GetMapping("/availability")
     public List<Car> checkAvailability() {
         LocalDateTime now = LocalDateTime.now();
@@ -76,7 +73,7 @@ public class CarController {
         return ResponseEntity.badRequest().body("La prenotazione non esiste!");
     }
 
-    @PostMapping("/cancel/{id}")
+    @DeleteMapping("/cancel/{id}")
     public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
         Car car = carRepository.findById(id).orElse(null);
         if (car != null && !car.isAvailable()) {
@@ -90,19 +87,22 @@ public class CarController {
         return ResponseEntity.badRequest().body("La prenotazione non esiste!");
     }
 
-    @GetMapping("/calendar")
-    public List<Car> getCalendar() {
+    @GetMapping("/occupied")
+    public List<Car> getCurrentlyOccupiedCars() {
         LocalDateTime now = LocalDateTime.now();
         return carRepository.findAll().stream()
-                .filter(car -> car.getAvailableUntil() != null && car.getAvailableUntil().isAfter(now))
+                .filter(car -> !car.isAvailable()
+                        && car.getBookingStart().isBefore(now)
+                        && car.getBookingEnd().isAfter(now))
                 .collect(Collectors.toList());
     }
 
-    @GetMapping("/occupied")
-    public List<Car> getOccupiedCars() {
+    @GetMapping("/future-bookings")
+    public List<Car> getFutureBookedCars() {
         LocalDateTime now = LocalDateTime.now();
         return carRepository.findAll().stream()
-                .filter(car -> car.getAvailableUntil() != null && car.getAvailableUntil().isAfter(now))
+                .filter(car -> !car.isAvailable()
+                        && car.getBookingStart().isAfter(now))
                 .collect(Collectors.toList());
     }
 }
