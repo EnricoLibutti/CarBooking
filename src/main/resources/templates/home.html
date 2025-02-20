@@ -12,32 +12,66 @@
         }
         .container {
             max-width: 1200px;
-            margin-top: 50px;
+            margin-top: 20px;
             background-color: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
         h1 {
             text-align: center;
             color: #333;
+            font-size: 1.8rem;
+        }
+        h3 {
+            font-size: 1.4rem;
+            margin-top: 1rem;
         }
         .section-divider {
-            margin: 40px 0;
+            margin: 20px 0;
             border-top: 2px solid #eee;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
+
+        /* Responsive table styles */
+        @media screen and (max-width: 768px) {
+            .table-responsive-custom {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .table-stack {
+                display: block;
+            }
+
+            .table-stack thead {
+                display: none;
+            }
+
+            .table-stack tr {
+                display: block;
+                border: 1px solid #ddd;
+                margin-bottom: 1rem;
+                background: #fff;
+                border-radius: 4px;
+                padding: 0.5rem;
+            }
+
+            .table-stack td {
+                display: block;
+                text-align: right;
+                padding: 0.5rem;
+                border: none;
+            }
+
+            .table-stack td::before {
+                content: attr(data-label);
+                float: left;
+                font-weight: bold;
+            }
         }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
+
         .btn-primary {
             background-color: #007bff;
             border-color: #007bff;
@@ -53,73 +87,72 @@
     <h1>Car Booking System</h1>
     <p class="text-center">Prenota un auto senza avere bisogno di aspettare la disponibilità</p>
 
-    <!-- Lista delle auto disponibili -->
     <div id="car-list">
         <h3>Auto Disponibili</h3>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Posti a Sedere</th>
-                <th>Ultimo Uso</th>
-                <th>Azione</th>
-            </tr>
-            </thead>
-            <tbody id="car-table-body">
-            <!-- Le righe delle auto verranno caricate dinamicamente -->
-            </tbody>
-        </table>
+        <div class="table-responsive-custom">
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Posti a Sedere</th>
+                    <th>Ultimo Uso</th>
+                    <th>Azione</th>
+                </tr>
+                </thead>
+                <tbody id="car-table-body">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="section-divider"></div>
 
-    <!-- Sezione Auto Attualmente Occupate -->
     <div id="occupied-cars">
         <h3>Auto Attualmente Occupate</h3>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Prenotato Da</th>
-                <th>Data Inizio</th>
-                <th>Data Fine</th>
-                <th>Durata</th>
-                <th>Motivazione</th>
-                <th>Azioni</th>
-            </tr>
-            </thead>
-            <tbody id="occupied-cars-body">
-            <!-- Le righe delle auto occupate verranno caricate dinamicamente -->
-            </tbody>
-        </table>
+        <div class="table-responsive-custom">
+            <table class="table table-striped table-stack">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Prenotato Da</th>
+                    <th>Data Inizio</th>
+                    <th>Data Fine</th>
+                    <th>Durata</th>
+                    <th>Motivazione</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody id="occupied-cars-body">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="section-divider"></div>
 
-    <!-- Sezione Auto Prenotate per il Futuro -->
     <div id="future-bookings">
         <h3>Auto Prenotate</h3>
-        <table class="table table-striped">
-            <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Prenotato Da</th>
-                <th>Data Prenotazione</th>
-                <th>Data Inizio</th>
-                <th>Data Fine</th>
-                <th>Durata</th>
-                <th>Motivazione</th>
-                <th>Azioni</th>
-            </tr>
-            </thead>
-            <tbody id="future-bookings-body">
-            <!-- Le righe delle prenotazioni future verranno caricate dinamicamente -->
-            </tbody>
-        </table>
+        <div class="table-responsive-custom">
+            <table class="table table-striped table-stack">
+                <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Prenotato Da</th>
+                    <th>Data Prenotazione</th>
+                    <th>Data Inizio</th>
+                    <th>Data Fine</th>
+                    <th>Durata</th>
+                    <th>Motivazione</th>
+                    <th>Azioni</th>
+                </tr>
+                </thead>
+                <tbody id="future-bookings-body">
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Form di prenotazione -->
-    <div id="booking-form" style="display: none;">
+    <div id="booking-form" style="display: none;" class="mt-4">
         <h3>Prenota Auto</h3>
         <form id="booking-form-data" class="mt-4">
             <div class="mb-3">
@@ -138,42 +171,50 @@
                 <label for="reason" class="form-label">Motivazione:</label>
                 <textarea class="form-control" id="reason" rows="3" required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
-            <button type="button" class="btn btn-secondary" onclick="hideBookingForm()">Annulla</button>
+            <div class="d-grid gap-2 d-md-flex">
+                <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
+                <button type="button" class="btn btn-secondary" onclick="hideBookingForm()">Annulla</button>
+            </div>
         </form>
     </div>
 </div>
 
-<!-- Script per caricare le auto e gestire le prenotazioni -->
 <script th:inline="javascript">
-    // Variabili globali
     let carTableBody;
     let occupiedCarsBody;
     let futureBookingsBody;
     let bookingForm;
     let bookingFormData;
 
-    // Funzione globale per mostrare il form di prenotazione
+    // Funzione per formattare la durata
+    function formatDuration(hours) {
+        if (hours >= 24) {
+            const days = Math.floor(hours / 24);
+            const remainingHours = hours % 24;
+            if (remainingHours === 0) {
+                return `${days} ${days === 1 ? 'giorno' : 'giorni'}`;
+            }
+            return `${days} ${days === 1 ? 'giorno' : 'giorni'} e ${remainingHours} ${remainingHours === 1 ? 'ora' : 'ore'}`;
+        }
+        return `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
+    }
+
     window.showBookingForm = function(carId) {
         bookingForm.style.display = "block";
         bookingFormData.carId = carId;
-
-        // Imposta la data minima per le prenotazioni a oggi
         const now = new Date();
         const tzOffset = now.getTimezoneOffset() * 60000;
         const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
-
         document.getElementById("startDateTime").min = localISOTime;
         document.getElementById("endDateTime").min = localISOTime;
+        bookingForm.scrollIntoView({ behavior: 'smooth' });
     }
 
-    // Funzione globale per nascondere il form
     window.hideBookingForm = function() {
         bookingForm.style.display = "none";
         bookingFormData.reset();
     }
 
-    // Funzione globale per gestire cancellazioni e terminazioni
     window.handleBookingAction = async function(id, isTermination) {
         const actionType = isTermination ? "terminare" : "cancellare";
         if (!confirm(`Sei sicuro di voler ${actionType} questa prenotazione?`)) {
@@ -204,7 +245,6 @@
         }
     }
 
-    // Funzioni di caricamento dati
     async function loadCars() {
         try {
             const response = await fetch("/api/cars");
@@ -217,12 +257,12 @@
             cars.forEach(car => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${car.name}</td>
-                    <td>${car.seats}</td>
-                    <td>${car.lastUsed ? new Date(car.lastUsed).toLocaleString() : "Non utilizzata"}</td>
-                    <td>
+                    <td data-label="Nome">${car.name}</td>
+                    <td data-label="Posti a Sedere">${car.seats}</td>
+                    <td data-label="Ultimo Uso">${car.lastUsed ? new Date(car.lastUsed).toLocaleString() : "Non utilizzata"}</td>
+                    <td data-label="Azione">
                         ${car.available
-                    ? `<button class="btn btn-primary" onclick="showBookingForm(${car.id})">Prenota</button>`
+                    ? `<button class="btn btn-primary btn-sm" onclick="showBookingForm(${car.id})">Prenota</button>`
                     : '<span class="text-danger">Non Disponibile</span>'}
                     </td>
                 `;
@@ -245,13 +285,13 @@
             occupiedCars.forEach(car => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${car.name}</td>
-                    <td>${car.bookedByName}</td>
-                    <td>${new Date(car.bookingStart).toLocaleString()}</td>
-                    <td>${new Date(car.bookingEnd).toLocaleString()}</td>
-                    <td>${car.bookedDuration} ore</td>
-                    <td>${car.bookedForReason}</td>
-                    <td>
+                    <td data-label="Nome">${car.name}</td>
+                    <td data-label="Prenotato Da">${car.bookedByName}</td>
+                    <td data-label="Data Inizio">${new Date(car.bookingStart).toLocaleString()}</td>
+                    <td data-label="Data Fine">${new Date(car.bookingEnd).toLocaleString()}</td>
+                    <td data-label="Durata">${formatDuration(car.bookedDuration)}</td>
+                    <td data-label="Motivazione">${car.bookedForReason}</td>
+                    <td data-label="Azioni">
                         <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${car.id}, true)">
                             Termina
                         </button>
@@ -276,14 +316,14 @@
             futureBookings.forEach(car => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td>${car.name}</td>
-                    <td>${car.bookedByName}</td>
-                    <td>${new Date(car.bookedAt).toLocaleString()}</td>
-                    <td>${new Date(car.bookingStart).toLocaleString()}</td>
-                    <td>${new Date(car.bookingEnd).toLocaleString()}</td>
-                    <td>${car.bookedDuration} ore</td>
-                    <td>${car.bookedForReason}</td>
-                    <td>
+                    <td data-label="Nome">${car.name}</td>
+                    <td data-label="Prenotato Da">${car.bookedByName}</td>
+                    <td data-label="Data Prenotazione">${new Date(car.bookedAt).toLocaleString()}</td>
+                    <td data-label="Data Inizio">${new Date(car.bookingStart).toLocaleString()}</td>
+                    <td data-label="Data Fine">${new Date(car.bookingEnd).toLocaleString()}</td>
+                    <td data-label="Durata">${formatDuration(car.bookedDuration)}</td>
+                    <td data-label="Motivazione">${car.bookedForReason}</td>
+                    <td data-label="Azioni">
                         <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${car.id}, false)">
                             Annulla
                         </button>
@@ -296,7 +336,6 @@
         }
     }
 
-    // Funzione globale per caricare tutti i dati
     window.loadAllData = async function() {
         try {
             await loadCars();
@@ -313,14 +352,6 @@
         futureBookingsBody = document.getElementById("future-bookings-body");
         bookingForm = document.getElementById("booking-form");
         bookingFormData = document.getElementById("booking-form-data");
-
-        // Rimosso il duplicato della funzione loadCars
-
-        // Rimosso il duplicato della funzione loadOccupiedCars
-
-        // Rimosso il duplicato della funzione loadFutureBookings
-
-        // Rimosso il duplicato della funzione loadAllData poiché ora è globale
 
         bookingFormData.addEventListener('submit', async function(event) {
             event.preventDefault();
@@ -360,12 +391,10 @@
             }
         });
 
-        // Funzione per aggiornare periodicamente le liste
         function setupAutoRefresh() {
-            setInterval(loadAllData, 60000); // Aggiorna ogni minuto
+            setInterval(loadAllData, 60000);
         }
 
-        // Carica i dati iniziali
         loadAllData();
         setupAutoRefresh();
     });
