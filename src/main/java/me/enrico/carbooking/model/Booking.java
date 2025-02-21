@@ -2,7 +2,6 @@ package me.enrico.carbooking.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,4 +15,5 @@ public class Booking {
     private Car car;
 
     private LocalDateTime bookingTime;
+
 }

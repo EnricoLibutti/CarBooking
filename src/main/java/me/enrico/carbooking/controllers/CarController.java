@@ -23,7 +23,12 @@ public class CarController {
 
     @GetMapping
     public List<Car> getAllCars() {
-        return carRepository.findByAvailable(true);
+        LocalDateTime now = LocalDateTime.now().atZone(ZoneId.of("Europe/Rome")).toLocalDateTime();
+        return carRepository.findAll().stream()
+                .filter(car -> car.isAvailable() ||
+                        (car.getBookingStart() != null && car.getBookingEnd() != null &&
+                                (car.getBookingStart().isAfter(now) || car.getBookingEnd().isBefore(now))))
+                .collect(Collectors.toList());
     }
 
     @PostMapping("/book/{id}")

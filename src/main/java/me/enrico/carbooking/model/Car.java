@@ -5,12 +5,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
+
 @Data
 public class Car {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String name;
     private int seats;
     private boolean available = true;
@@ -21,16 +22,17 @@ public class Car {
     private LocalDateTime bookedAt;
     private LocalDateTime bookingStart;
     private LocalDateTime bookingEnd;
+
     private int bookedDuration;
     private String bookedForReason;
 
 
     public Car() {}
 
-
     public Car(String name, int seats, boolean available) {
         this.name = name;
         this.seats = seats;
         this.available = available;
     }
+
 }

@@ -13,9 +13,9 @@ public class DataLoader {
     CommandLineRunner initDatabase(CarRepository carRepository) {
         return args -> {
             if (carRepository.count() == 0) {
-                carRepository.save(new Car("Mini Nera", 4 , true));
-                carRepository.save(new Car("Mini Bianca", 4, true));
-                carRepository.save(new Car("Opel Mokka", 5, true));
+                carRepository.save(new Car("Mini Nera", 4, true));
+                carRepository.save(new Car("Mini Bianca", 4,true));
+                carRepository.save(new Car("Opel Mokka", 5,true));
             }
         };
     }
