@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
     List<Booking> findByCarIdAndActiveTrue(Long carId);
-    List<Booking> findByActiveTrueAndStartDateTimeBeforeAndEndDateTimeAfter(
-            LocalDateTime now, LocalDateTime now2);
+    List<Booking> findByActiveTrueAndStartDateTimeLessThanEqualAndEndDateTimeAfter(
+            LocalDateTime now, LocalDateTime now1);
     List<Booking> findByActiveTrueAndStartDateTimeAfter(LocalDateTime now);
 }

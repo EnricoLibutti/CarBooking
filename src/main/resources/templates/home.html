@@ -181,172 +181,224 @@
 </div>
 
 <script th:inline="javascript">
-    let carTableBody = null;
-    let occupiedCarsBody = null;
-    let futureBookingsBody = null;
-    let bookingForm = null;
-    let bookingFormData = null;
-    let selectedCarId = null;
-    let selectedCarBookings = [];
+    // Constants
+    const API_ENDPOINTS = {
+        CARS: '/api/cars',
+        OCCUPIED: '/api/cars/occupied',
+        FUTURE_BOOKINGS: '/api/cars/future-bookings',
+        BOOK: (id) => `/api/cars/book/${id}`,
+        TERMINATE: (id) => `/api/cars/terminate/${id}`,
+        CANCEL: (id) => `/api/calls/cancel/${id}`
+    };
 
-    function formatDuration(hours) {
+    const TIME_CONSTANTS = {
+        REFRESH_INTERVAL: 60000,
+        MARGIN_MINUTES: 15
+    };
+
+    // Helper Functions
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleString('it-IT', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
+
+    const formatDuration = (hours) => {
         if (hours >= 24) {
             const days = Math.floor(hours / 24);
             const remainingHours = hours % 24;
-            if (remainingHours === 0) {
-                return `${days} ${days === 1 ? 'giorno' : 'giorni'}`;
-            }
-            return `${days} ${days === 1 ? 'giorno' : 'giorni'} e ${remainingHours} ${remainingHours === 1 ? 'ora' : 'ore'}`;
+            return remainingHours === 0
+                ? `${days} ${days === 1 ? 'giorno' : 'giorni'}`
+                : `${days} ${days === 1 ? 'giorno' : 'giorni'} e ${remainingHours} ${remainingHours === 1 ? 'ora' : 'ore'}`;
         }
         return `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
-    }
+    };
 
-    function getCarStatus(car, bookings) {
-        const now = new Date();
-        const currentBooking = bookings.find(booking =>
-            new Date(booking.startDateTime) <= now &&
-            new Date(booking.endDateTime) > now
-        );
+    // State Management
+    class BookingState {
+        constructor() {
+            this.selectedCarId = null;
+            this.selectedCarBookings = [];
+            this.elements = {};
+        }
 
-        if (currentBooking) {
-            return {
-                status: 'Occupata fino al ' + new Date(currentBooking.endDateTime).toLocaleString(),
-                class: 'text-danger'
+        initializeElements() {
+            this.elements = {
+                carTableBody: document.getElementById('car-table-body'),
+                occupiedCarsBody: document.getElementById('occupied-cars-body'),
+                futureBookingsBody: document.getElementById('future-bookings-body'),
+                bookingForm: document.getElementById('booking-form'),
+                bookingFormData: document.getElementById('booking-form-data')
             };
+
+            return Object.values(this.elements).every(element => element !== null);
         }
 
-        const nextBooking = bookings
-            .filter(booking => new Date(booking.startDateTime) > now)
-            .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))[0];
-
-        if (nextBooking) {
-            return {
-                status: 'Disponibile fino al ' + new Date(nextBooking.startDateTime).toLocaleString(),
-                class: 'text-warning'
-            };
-        }
-
-        return {
-            status: 'Disponibile',
-            class: 'text-success'
-        };
-    }
-
-    async function getCarBookings(carId) {
-        try {
-            const [occupied, future] = await Promise.all([
-                fetch("/api/cars/occupied").then(r => r.json()),
-                fetch("/api/cars/future-bookings").then(r => r.json())
-            ]);
-
-            return [...occupied, ...future].filter(booking => booking.car.id === carId);
-        } catch (error) {
-            console.error("Errore nel recupero delle prenotazioni:", error);
-            return [];
+        resetBookingForm() {
+            this.selectedCarId = null;
+            this.selectedCarBookings = [];
+            this.elements.bookingFormData.reset();
+            this.elements.bookingForm.style.display = 'none';
+            document.getElementById('existing-bookings')?.remove();
         }
     }
 
-    async function getNextBooking(carId) {
-        const now = new Date();
-        try {
-            const response = await fetch("/api/cars/future-bookings");
-            const bookings = await response.json();
-            const carBookings = bookings
-                .filter(booking => booking.id === carId)
-                .sort((a, b) => new Date(a.bookingStart) - new Date(b.bookingStart));
+    // Car Status Management
+    class CarStatusManager {
+        static getStatus(bookings) {
+            const now = new Date();
+            const marginMs = TIME_CONSTANTS.MARGIN_MINUTES * 60 * 1000;
 
-            return carBookings.length > 0 ? carBookings[0] : null;
-        } catch (error) {
-            console.error("Errore nel recupero delle prenotazioni future:", error);
-            return null;
-        }
-    }
-
-    window.showBookingForm = async function(carId) {
-        selectedCarId = carId;
-        selectedCarBookings = await getCarBookings(carId);
-
-        bookingForm.style.display = "block";
-        const now = new Date();
-        const tzOffset = now.getTimezoneOffset() * 60000;
-        const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, 16);
-        document.getElementById("startDateTime").min = localISOTime;
-        document.getElementById("endDateTime").min = localISOTime;
-
-        let bookingInfo = document.getElementById("existing-bookings");
-        if (!bookingInfo) {
-            bookingInfo = document.createElement("div");
-            bookingInfo.id = "existing-bookings";
-            bookingInfo.className = "mb-3 alert alert-info";
-            document.getElementById("booking-form-data").insertBefore(
-                bookingInfo,
-                document.getElementById("booking-form-data").firstChild
-            );
-        }
-
-        if (selectedCarBookings.length > 0) {
-            const sortedBookings = selectedCarBookings
-                .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
-
-            bookingInfo.innerHTML = "<strong>Prenotazioni esistenti per questa auto:</strong><br>" +
-                sortedBookings.map(booking =>
-                    `${new Date(booking.startDateTime).toLocaleString()} - ${new Date(booking.endDateTime).toLocaleString()}`
-                ).join("<br>");
-        } else {
-            bookingInfo.innerHTML = "<strong>Nessuna prenotazione esistente per questa auto</strong>";
-        }
-
-        bookingForm.scrollIntoView({ behavior: 'smooth' });
-    }
-
-    window.hideBookingForm = function() {
-        bookingForm.style.display = "none";
-        bookingFormData.reset();
-        selectedCarId = null;
-        selectedCarBookings = [];
-        const bookingInfo = document.getElementById("existing-bookings");
-        if (bookingInfo) {
-            bookingInfo.remove();
-        }
-    }
-
-    window.handleBookingAction = async function(carId, isTerminate) {
-        try {
-            const endpoint = isTerminate ? `/api/cars/terminate/${carId}` : `/api/cars/cancel/${carId}`;
-            const method = isTerminate ? 'POST' : 'DELETE';
-
-            const response = await fetch(endpoint, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+            const currentBooking = bookings.find(booking => {
+                const start = new Date(booking.startDateTime);
+                const end = new Date(booking.endDateTime);
+                return (start <= new Date(now.getTime() + marginMs) && end > now);
             });
 
-            if (!response.ok) {
-                throw new Error('Operazione non riuscita');
+            if (currentBooking) {
+                return {
+                    status: `Occupata fino al ${formatDate(currentBooking.endDateTime)}`,
+                    class: 'text-danger'
+                };
             }
 
-            const message = await response.text();
-            alert(message);
-            await loadAllData();
-        } catch (error) {
-            console.error("Errore durante l'operazione:", error);
-            alert("Si è verificato un errore. Riprova più tardi.");
+            const nextBooking = bookings
+                .filter(booking => new Date(booking.startDateTime) > now)
+                .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))[0];
+
+            return nextBooking ? {
+                status: `Disponibile fino al ${formatDate(nextBooking.startDateTime)}`,
+                class: 'text-warning'
+            } : {
+                status: 'Disponibile',
+                class: 'text-success'
+            };
+        }
+
+        static validateBooking(startDateTime, endDateTime, existingBookings) {
+            const start = new Date(startDateTime);
+            const end = new Date(endDateTime);
+            const now = new Date();
+
+            if (end <= start) {
+                throw new Error("La data e ora di fine deve essere successiva alla data e ora di inizio.");
+            }
+
+            if (start < now) {
+                throw new Error("La data di inizio non può essere nel passato.");
+            }
+
+            const hasOverlap = existingBookings.some(booking => {
+                const bookingStart = new Date(booking.startDateTime);
+                const bookingEnd = new Date(booking.endDateTime);
+                return bookingEnd > now && start < bookingEnd && end > bookingStart;
+            });
+
+            if (hasOverlap) {
+                throw new Error("L'auto è già prenotata per il periodo selezionato. Scegli un altro periodo.");
+            }
+
+            return true;
         }
     }
 
-    async function loadCars() {
-        try {
-            const response = await fetch("/api/cars");
-            const cars = await response.json();
+    // API Service
+    class ApiService {
+        static async fetchWithError(url, options = {}) {
+            const response = await fetch(url, options);
+            if (!response.ok) {
+                const error = await response.text();
+                throw new Error(error || 'Errore nella richiesta');
+            }
+            return response;
+        }
 
+        static async getCarBookings(carId) {
+            try {
+                const [occupied, future] = await Promise.all([
+                    this.fetchWithError(API_ENDPOINTS.OCCUPIED).then(r => r.json()),
+                    this.fetchWithError(API_ENDPOINTS.FUTURE_BOOKINGS).then(r => r.json())
+                ]);
+                return [...occupied, ...future].filter(booking => booking.car.id === carId);
+            } catch (error) {
+                console.error("Errore nel recupero delle prenotazioni:", error);
+                return [];
+            }
+        }
+
+        static async handleBookingAction(carId, isTerminate) {
+            const endpoint = isTerminate ? API_ENDPOINTS.TERMINATE(carId) : API_ENDPOINTS.CANCEL(carId);
+            const method = isTerminate ? 'POST' : 'DELETE';
+            return this.fetchWithError(endpoint, { method });
+        }
+    }
+
+    // UI Rendering
+    class BookingUI {
+        constructor(state) {
+            this.state = state;
+        }
+
+        async showBookingForm(carId) {
+            this.state.selectedCarId = carId;
+            this.state.selectedCarBookings = await ApiService.getCarBookings(carId);
+            this.state.elements.bookingForm.style.display = "block";
+
+            const now = new Date();
+            const localISOTime = now.toISOString().slice(0, 16);
+
+            const startInput = document.getElementById("startDateTime");
+            const endInput = document.getElementById("endDateTime");
+            startInput.min = localISOTime;
+            startInput.value = localISOTime;
+            endInput.min = localISOTime;
+            endInput.value = localISOTime;
+
+            this.renderExistingBookings();
+            this.state.elements.bookingForm.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        renderExistingBookings() {
+            let bookingInfo = document.getElementById("existing-bookings");
+            if (!bookingInfo) {
+                bookingInfo = document.createElement("div");
+                bookingInfo.id = "existing-bookings";
+                bookingInfo.className = "mb-3 alert alert-info";
+                this.state.elements.bookingFormData.insertBefore(
+                    bookingInfo,
+                    this.state.elements.bookingFormData.firstChild
+                );
+            }
+
+            if (this.state.selectedCarBookings.length > 0) {
+                const sortedBookings = this.state.selectedCarBookings
+                    .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime));
+
+                bookingInfo.innerHTML = `
+                <strong>Prenotazioni esistenti per questa auto:</strong><br>
+                ${sortedBookings.map(booking =>
+                    `<span>${formatDate(booking.startDateTime)} - ${formatDate(booking.endDateTime)}</span>`
+                ).join("<br>")}
+            `;
+            } else {
+                bookingInfo.innerHTML = "<strong>Nessuna prenotazione esistente per questa auto</strong>";
+            }
+        }
+
+        async renderCarList(cars) {
+            const carTableBody = this.state.elements.carTableBody;
             carTableBody.innerHTML = cars.length === 0
                 ? "<tr><td colspan='5'>Nessuna auto disponibile.</td></tr>"
                 : "";
 
             for (const car of cars) {
-                const bookings = await getCarBookings(car.id);
-                const status = getCarStatus(car, bookings);
+                const bookings = await ApiService.getCarBookings(car.id);
+                const status = CarStatusManager.getStatus(bookings);
                 const nextBooking = bookings
                     .filter(b => new Date(b.startDateTime) > new Date())
                     .sort((a, b) => new Date(a.startDateTime) - new Date(b.startDateTime))[0];
@@ -355,170 +407,170 @@
                 row.innerHTML = `
                 <td data-label="Nome">${car.name}</td>
                 <td data-label="Posti a Sedere">${car.seats}</td>
-                <td data-label="Stato">
-                    <span class="${status.class}">${status.status}</span>
-                </td>
+                <td data-label="Stato"><span class="${status.class}">${status.status}</span></td>
                 <td data-label="Prossima Prenotazione">
                     ${nextBooking
-                    ? `${new Date(nextBooking.startDateTime).toLocaleString()} - ${new Date(nextBooking.endDateTime).toLocaleString()}`
+                    ? `${formatDate(nextBooking.startDateTime)} - ${formatDate(nextBooking.endDateTime)}`
                     : 'Nessuna prenotazione futura'}
                 </td>
                 <td data-label="Azione">
-                    <button class="btn btn-primary btn-sm" onclick="showBookingForm(${car.id})">
+                    <button class="btn btn-primary btn-sm" onclick="app.ui.showBookingForm(${car.id})">
                         Prenota
                     </button>
                 </td>
             `;
                 carTableBody.appendChild(row);
             }
-        } catch (error) {
-            console.error("Errore durante il caricamento delle auto:", error);
         }
-    }
 
-    async function loadOccupiedCars() {
-        try {
-            const response = await fetch("/api/cars/occupied");
-            const occupiedBookings = await response.json();
-
-            occupiedCarsBody.innerHTML = occupiedBookings.length === 0
+        renderOccupiedCars(bookings) {
+            const occupiedCarsBody = this.state.elements.occupiedCarsBody;
+            occupiedCarsBody.innerHTML = bookings.length === 0
                 ? "<tr><td colspan='7'>Nessuna auto attualmente occupata.</td></tr>"
                 : "";
 
-            occupiedBookings.forEach(booking => {
+            bookings.forEach(booking => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
                 <td data-label="Nome">${booking.car.name}</td>
                 <td data-label="Prenotato Da">${booking.bookedByName}</td>
-                <td data-label="Data Inizio">${new Date(booking.startDateTime).toLocaleString()}</td>
-                <td data-label="Data Fine">${new Date(booking.endDateTime).toLocaleString()}</td>
+                <td data-label="Data Inizio">${formatDate(booking.startDateTime)}</td>
+                <td data-label="Data Fine">${formatDate(booking.endDateTime)}</td>
                 <td data-label="Durata">${formatDuration(booking.duration)}</td>
                 <td data-label="Motivazione">${booking.reason}</td>
                 <td data-label="Azioni">
-                    <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${booking.id}, true)">
+                    <button class="btn btn-danger btn-sm" onclick="app.handleBookingAction(${booking.id}, true)">
                         Termina
                     </button>
                 </td>
             `;
                 occupiedCarsBody.appendChild(row);
             });
-        } catch (error) {
-            console.error("Errore durante il caricamento delle auto occupate:", error);
         }
-    }
 
-    async function loadFutureBookings() {
-        try {
-            const response = await fetch("/api/cars/future-bookings");
-            const futureBookings = await response.json();
-
-            futureBookingsBody.innerHTML = futureBookings.length === 0
+        renderFutureBookings(bookings) {
+            const futureBookingsBody = this.state.elements.futureBookingsBody;
+            futureBookingsBody.innerHTML = bookings.length === 0
                 ? "<tr><td colspan='8'>Nessuna prenotazione futura.</td></tr>"
                 : "";
 
-            futureBookings.forEach(booking => {
+            bookings.forEach(booking => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td data-label="Nome">${booking.car.name}</td>
-                    <td data-label="Prenotato Da">${booking.bookedByName}</td>
-                    <td data-label="Data Prenotazione">${new Date(booking.bookedAt).toLocaleString()}</td>
-                    <td data-label="Data Inizio">${new Date(booking.startDateTime).toLocaleString()}</td>
-                    <td data-label="Data Fine">${new Date(booking.endDateTime).toLocaleString()}</td>
-                    <td data-label="Durata">${formatDuration(booking.duration)}</td>
-                    <td data-label="Motivazione">${booking.reason}</td>
-                    <td data-label="Azioni">
-                        <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${booking.id}, false)">
-                            Annulla
-                        </button>
-                    </td>
-                `;
+                <td data-label="Nome">${booking.car.name}</td>
+                <td data-label="Prenotato Da">${booking.bookedByName}</td>
+                <td data-label="Data Prenotazione">${formatDate(booking.bookedAt)}</td>
+                <td data-label="Data Inizio">${formatDate(booking.startDateTime)}</td>
+                <td data-label="Data Fine">${formatDate(booking.endDateTime)}</td>
+                <td data-label="Durata">${formatDuration(booking.duration)}</td>
+                <td data-label="Motivazione">${booking.reason}</td>
+                <td data-label="Azioni">
+                    <button class="btn btn-danger btn-sm" onclick="app.handleBookingAction(${booking.id}, false)">
+                        Annulla
+                    </button>
+                </td>
+            `;
                 futureBookingsBody.appendChild(row);
             });
-        } catch (error) {
-            console.error("Errore durante il caricamento delle prenotazioni future:", error);
         }
     }
 
-    window.loadAllData = async function() {
-        try {
-            await loadCars();
-            await loadOccupiedCars();
-            await loadFutureBookings();
-        } catch (error) {
-            console.error("Errore durante il caricamento dei dati:", error);
-        }
-    }
-
-    document.addEventListener("DOMContentLoaded", function() {
-        // Initialize DOM elements
-        carTableBody = document.getElementById('car-table-body');
-        occupiedCarsBody = document.getElementById('occupied-cars-body');
-        futureBookingsBody = document.getElementById('future-bookings-body');
-        bookingForm = document.getElementById('booking-form');
-        bookingFormData = document.getElementById('booking-form-data');
-
-        // Verify elements exist
-        if (!carTableBody || !occupiedCarsBody || !futureBookingsBody || !bookingForm || !bookingFormData) {
-            console.error("Some required DOM elements were not found!");
-            return;
+    // Main Application
+    class CarBookingApp {
+        constructor() {
+            this.state = new BookingState();
+            this.ui = new BookingUI(this.state);
         }
 
-        // Add event listener to form
-        bookingFormData.addEventListener('submit', async function(event) {
+        async initialize() {
+            if (!this.state.initializeElements()) {
+                console.error("Required DOM elements not found!");
+                return;
+            }
+
+            this.setupEventListeners();
+            await this.loadAllData();
+            setInterval(() => this.loadAllData(), TIME_CONSTANTS.REFRESH_INTERVAL);
+        }
+
+        setupEventListeners() {
+            this.state.elements.bookingFormData.addEventListener('submit', this.handleBookingSubmit.bind(this));
+        }
+
+        async handleBookingSubmit(event) {
             event.preventDefault();
             const formData = {
                 name: document.getElementById("name").value,
-                startDateTime: new Date(document.getElementById("startDateTime").value),
-                endDateTime: new Date(document.getElementById("endDateTime").value),
+                startDateTime: document.getElementById("startDateTime").value + 'Z',
+                endDateTime: document.getElementById("endDateTime").value + 'Z',
                 reason: document.getElementById("reason").value
             };
 
-            // Validation
-            if (formData.startDateTime >= formData.endDateTime) {
-                alert("La data e ora di fine deve essere successiva alla data e ora di inizio.");
-                return;
-            }
-
-            // Check for overlaps
-            const isOverlapping = selectedCarBookings.some(booking => {
-                const bookingStart = new Date(booking.startDateTime);
-                const bookingEnd = new Date(booking.endDateTime);
-                return !(formData.endDateTime <= bookingStart || formData.startDateTime >= bookingEnd);
-            });
-
-            if (isOverlapping) {
-                alert("L'auto è già prenotata per il periodo selezionato. Scegli un altro periodo.");
-                return;
-            }
-
             try {
-                const response = await fetch(`/api/cars/book/${selectedCarId}`, {
-                    method: "POST",
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
+                CarStatusManager.validateBooking(
+                    formData.startDateTime,
+                    formData.endDateTime,
+                    this.state.selectedCarBookings
+                );
 
-                if (!response.ok) {
-                    throw new Error('Errore durante la prenotazione');
-                }
+                const response = await ApiService.fetchWithError(
+                    API_ENDPOINTS.BOOK(this.state.selectedCarId),
+                    {
+                        method: "POST",
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                    }
+                );
 
                 const message = await response.text();
                 alert(message);
-                hideBookingForm();
-                await loadAllData();
+                this.state.resetBookingForm();
+                await this.loadAllData();
             } catch (error) {
-                console.error("Errore durante la prenotazione:", error);
-                alert("Si è verificato un errore durante la prenotazione. Riprova più tardi.");
+                alert(error.message);
             }
-        });
+        }
 
-        // Initial data load
-        loadAllData();
-        // Refresh data every minute
-        setInterval(loadAllData, 60000);
-    });
+        async handleBookingAction(carId, isTerminate) {
+            try {
+                const response = await ApiService.handleBookingAction(carId, isTerminate);
+                const message = await response.text();
+                alert(message);
+                await this.loadAllData();
+            } catch (error) {
+                console.error("Errore durante l'operazione:", error);
+                alert("Si è verificato un errore. Riprova più tardi.");
+            }
+        }
+
+        async loadAllData() {
+            try {
+                const [cars, occupied, future] = await Promise.all([
+                    ApiService.fetchWithError(API_ENDPOINTS.CARS).then(r => r.json()),
+                    ApiService.fetchWithError(API_ENDPOINTS.OCCUPIED).then(r => r.json()),
+                    ApiService.fetchWithError(API_ENDPOINTS.FUTURE_BOOKINGS).then(r => r.json())
+                ]);
+
+                await this.ui.renderCarList(cars);
+                this.ui.renderOccupiedCars(occupied);
+                this.ui.renderFutureBookings(future);
+            } catch (error) {
+                console.error("Errore durante il caricamento dei dati:", error);
+            }
+        }
+    }
+
+    // Initialize application
+    const app = new CarBookingApp();
+
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => app.initialize());
+
+    // Global functions for HTML access
+    window.showBookingForm = (carId) => app.ui.showBookingForm(carId);
+    window.hideBookingForm = () => app.state.resetBookingForm();
+    window.handleBookingAction = (carId, isTerminate) => app.handleBookingAction(carId, isTerminate);
+    window.loadAllData = () => app.loadAllData();
 </script>
 </body>
 </html>

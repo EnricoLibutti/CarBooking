@@ -1,16 +1,16 @@
 package me.enrico.carbooking.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import me.enrico.carbooking.dto.CarBookingRequest;
 import me.enrico.carbooking.model.Booking;
 import me.enrico.carbooking.model.Car;
 import me.enrico.carbooking.repositories.BookingRepository;
+import me.enrico.carbooking.request.CarBookingRequest;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 @Service
@@ -28,9 +28,9 @@ public class BookingService {
         Booking booking = new Booking();
         booking.setCar(car);
         booking.setBookedByName(request.getName());
-        booking.setBookedAt(LocalDateTime.now(ROME_ZONE));
-        booking.setStartDateTime(request.getStartDateTime());
-        booking.setEndDateTime(request.getEndDateTime());
+        booking.setBookedAt(ZonedDateTime.now(ROME_ZONE).toLocalDateTime());
+        booking.setStartDateTime(request.getStartDateTime().atZone(ROME_ZONE).toLocalDateTime());
+        booking.setEndDateTime(request.getEndDateTime().atZone(ROME_ZONE).toLocalDateTime());
         booking.setDuration(calculateDuration(request));
         booking.setReason(request.getReason());
         booking.setActive(true);
@@ -49,9 +49,6 @@ public class BookingService {
             throw new IllegalArgumentException("La data di inizio deve essere precedente alla data di fine");
         }
 
-        if (request.getStartDateTime().isBefore(LocalDateTime.now(ROME_ZONE))) {
-            throw new IllegalArgumentException("Non puoi prenotare per una data passata");
-        }
     }
 
     private void checkForOverlappingBookings(Long carId, CarBookingRequest request) {

@@ -3,12 +3,12 @@ package me.enrico.carbooking.controllers;
 import lombok.RequiredArgsConstructor;
 import me.enrico.carbooking.dto.BookingDTO;
 import me.enrico.carbooking.dto.CarDTO;
-import me.enrico.carbooking.dto.CarBookingRequest;
 import me.enrico.carbooking.exception.ResourceNotFoundException;
 import me.enrico.carbooking.model.Booking;
 import me.enrico.carbooking.model.Car;
 import me.enrico.carbooking.repositories.BookingRepository;
 import me.enrico.carbooking.repositories.CarRepository;
+import me.enrico.carbooking.request.CarBookingRequest;
 import me.enrico.carbooking.service.BookingService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,7 +59,7 @@ public class CarController {
     public ResponseEntity<List<BookingDTO>> getCurrentlyOccupiedCars() {
         LocalDateTime now = LocalDateTime.now(ROME_ZONE);
         List<BookingDTO> occupiedCars = bookingRepository
-                .findByActiveTrueAndStartDateTimeBeforeAndEndDateTimeAfter(now, now)
+                .findByActiveTrueAndStartDateTimeLessThanEqualAndEndDateTimeAfter(now, now)
                 .stream()
                 .map(this::convertToBookingDTO)
                 .collect(Collectors.toList());
