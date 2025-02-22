@@ -1,38 +1,30 @@
 package me.enrico.carbooking.model;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Data;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-
 @Data
 public class Car {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
     private int seats;
-    private boolean available = true;
-    private LocalDateTime lastUsed;
-    private LocalDateTime availableUntil;
+    private boolean available;
 
-    private String bookedByName;
-    private LocalDateTime bookedAt;
-    private LocalDateTime bookingStart;
-    private LocalDateTime bookingEnd;
-
-    private int bookedDuration;
-    private String bookedForReason;
-
+    @JsonManagedReference
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL)
+    private List<Booking> bookings = new ArrayList<>();
 
     public Car() {}
 
-    public Car(String name, int seats, boolean available) {
+    public Car(String name, int seats) {
         this.name = name;
         this.seats = seats;
-        this.available = available;
+        this.available = true;
     }
-
 }

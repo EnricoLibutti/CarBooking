@@ -416,18 +416,18 @@
                 ? "<tr><td colspan='8'>Nessuna prenotazione futura.</td></tr>"
                 : "";
 
-            futureBookings.forEach(booking => {
+            futureBookings.forEach(car => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                    <td data-label="Nome">${booking.car.name}</td>
-                    <td data-label="Prenotato Da">${booking.bookedByName}</td>
-                    <td data-label="Data Prenotazione">${new Date(booking.bookedAt).toLocaleString()}</td>
-                    <td data-label="Data Inizio">${new Date(booking.startDateTime).toLocaleString()}</td>
-                    <td data-label="Data Fine">${new Date(booking.endDateTime).toLocaleString()}</td>
-                    <td data-label="Durata">${formatDuration(booking.duration)}</td>
-                    <td data-label="Motivazione">${booking.reason}</td>
+                    <td data-label="Nome">${car.name}</td>
+                    <td data-label="Prenotato Da">${car.bookedByName}</td>
+                    <td data-label="Data Prenotazione">${new Date(car.bookedAt).toLocaleString()}</td>
+                    <td data-label="Data Inizio">${new Date(car.bookingStart).toLocaleString()}</td>
+                    <td data-label="Data Fine">${new Date(car.bookingEnd).toLocaleString()}</td>
+                    <td data-label="Durata">${formatDuration(car.bookedDuration)}</td>
+                    <td data-label="Motivazione">${car.bookedForReason}</td>
                     <td data-label="Azioni">
-                        <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${booking.id}, false)">
+                        <button class="btn btn-danger btn-sm" onclick="handleBookingAction(${car.id}, false)">
                             Annulla
                         </button>
                     </td>
