@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistiche Prenotazioni Auto</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --background-color: #f1f5f9;
+            --card-background: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .filters {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .filter-group select,
+        .filter-group input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 24px;
+        }
+
+        h1 {
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+
+        h2 {
+            color: var(--text-secondary);
+            margin-top: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .summary-stat {
+            text-align: center;
+            padding: 24px;
+            background: var(--card-background);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .summary-stat h3 {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .summary-stat p {
+            margin: 10px 0 0;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .legend-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            margin-right: 6px;
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Statistiche Prenotazioni Auto</h1>
+
+    <div class="filters">
+        <div class="filter-group">
+            <label for="dateRange">Periodo</label>
+            <select id="dateRange" onchange="updateFilters()">
+                <option value="30">Ultimi 30 giorni</option>
+                <option value="90">Ultimi 3 mesi</option>
+                <option value="180">Ultimi 6 mesi</option>
+                <option value="365">Ultimo anno</option>
+                <option value="all">Tutto</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="carFilter">Auto</label>
+            <select id="carFilter" onchange="updateFilters()">
+                <option value="all">Tutte le auto</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="startDate">Data Inizio</label>
+            <input type="date" id="startDate" onchange="updateFilters()">
+        </div>
+        <div class="filter-group">
+            <label for="endDate">Data Fine</label>
+            <input type="date" id="endDate" onchange="updateFilters()">
+        </div>
+    </div>
+
+    <div class="summary-stats">
+        <div class="summary-stat">
+            <h3>Totale Prenotazioni</h3>
+            <p id="totalBookings">-</p>
+        </div>
+        <div class="summary-stat">
+            <h3>Durata Media (ore)</h3>
+            <p id="avgDuration">-</p>
+        </div>
+        <div class="summary-stat">
+            <h3>Auto Più Prenotata</h3>
+            <p id="mostBookedCar">-</p>
+        </div>
+        <div class="summary-stat">
+            <h3>Motivo Più Comune</h3>
+            <p id="mostCommonReason">-</p>
+        </div>
+    </div>
+
+    <div class="stats-grid">
+        <div class="card">
+            <h2>Prenotazioni per Auto</h2>
+            <div class="chart-container">
+                <canvas id="bookingsPerCarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Ore per Auto</h2>
+            <div class="chart-container">
+                <canvas id="hoursPerCarChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Prenotazioni per Utente</h2>
+            <div class="chart-container">
+                <canvas id="bookingsPerUserChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Distribuzione Motivi</h2>
+            <div class="chart-container">
+                <canvas id="reasonDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Prenotazioni Mensili</h2>
+            <div class="chart-container">
+                <canvas id="monthlyBookingsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let charts = {};
+    let originalData = null;
+
+    const chartColors = [
+        'rgba(37, 99, 235, 0.5)',   // Blue
+        'rgba(239, 68, 68, 0.5)',   // Red
+        'rgba(234, 179, 8, 0.5)',   // Yellow
+        'rgba(34, 197, 94, 0.5)',   // Green
+        'rgba(168, 85, 247, 0.5)',  // Purple
+        'rgba(234, 88, 12, 0.5)',   // Orange
+        'rgba(14, 165, 233, 0.5)',  // Light Blue
+        'rgba(236, 72, 153, 0.5)'   // Pink
+    ];
+
+    const chartBorders = chartColors.map(color => color.replace('0.5', '1'));
+
+    function createChart(ctx, type, labels, data, title) {
+        const config = {
+            type: type,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    backgroundColor: chartColors,
+                    borderColor: chartBorders,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: type === 'pie',
+                        position: 'bottom'
+                    }
+                },
+                scales: type !== 'pie' ? {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                } : {}
+            }
+        };
+
+        if (charts[ctx.canvas.id]) {
+            charts[ctx.canvas.id].destroy();
+        }
+
+        charts[ctx.canvas.id] = new Chart(ctx, config);
+        return charts[ctx.canvas.id];
+    }
+
+    function updateFilters() {
+        const dateRange = document.getElementById('dateRange').value;
+        const carFilter = document.getElementById('carFilter').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        let filteredData = {...originalData};
+
+        if (startDate && endDate) {
+            // Filtra per date personalizzate
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            Object.keys(filteredData.monthlyBookings).forEach(key => {
+                const [year, month] = key.split('-');
+                const date = new Date(parseInt(year), parseInt(month) - 1);
+                if (date < start || date > end) {
+                    delete filteredData.monthlyBookings[key];
+                }
+            });
+        } else if (dateRange !== 'all') {
+            // Filtra per intervallo predefinito
+            const daysToSubtract = parseInt(dateRange);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToSubtract);
+
+            Object.keys(filteredData.monthlyBookings).forEach(key => {
+                const [year, month] = key.split('-');
+                const date = new Date(parseInt(year), parseInt(month) - 1);
+                if (date < cutoffDate) {
+                    delete filteredData.monthlyBookings[key];
+                }
+            });
+        }
+
+        if (carFilter !== 'all') {
+            // Filtra per auto specifica
+            filteredData.bookingsPerCar = {
+                [carFilter]: originalData.bookingsPerCar[carFilter]
+            };
+            filteredData.hoursPerCar = {
+                [carFilter]: originalData.hoursPerCar[carFilter]
+            };
+        }
+
+        updateCharts(filteredData);
+    }
+
+    function updateCharts(data) {
+        // Aggiorna statistiche di riepilogo
+        document.getElementById('totalBookings').textContent = data.totalBookings;
+        document.getElementById('avgDuration').textContent = data.avgDuration.toFixed(1);
+
+        // Trova l'auto più prenotata
+        const mostBookedCar = Object.entries(data.bookingsPerCar)
+            .reduce((a, b) => a[1] > b[1] ? a : b);
+        document.getElementById('mostBookedCar').textContent = mostBookedCar[0];
+
+        // Trova il motivo più comune
+        const mostCommonReason = Object.entries(data.reasonDistribution)
+            .reduce((a, b) => a[1] > b[1] ? a : b);
+        document.getElementById('mostCommonReason').textContent = mostCommonReason[0];
+
+        // Aggiorna i grafici
+        createChart(
+            document.getElementById('bookingsPerCarChart').getContext('2d'),
+            'bar',
+            Object.keys(data.bookingsPerCar),
+            Object.values(data.bookingsPerCar),
+            'Prenotazioni per Auto'
+        );
+
+        createChart(
+            document.getElementById('hoursPerCarChart').getContext('2d'),
+            'bar',
+            Object.keys(data.hoursPerCar),
+            Object.values(data.hoursPerCar),
+            'Ore per Auto'
+        );
+
+        createChart(
+            document.getElementById('bookingsPerUserChart').getContext('2d'),
+            'bar',
+            Object.keys(data.bookingsPerUser),
+            Object.values(data.bookingsPerUser),
+            'Prenotazioni per Utente'
+        );
+
+        createChart(
+            document.getElementById('reasonDistributionChart').getContext('2d'),
+            'pie',
+            Object.keys(data.reasonDistribution),
+            Object.values(data.reasonDistribution),
+            'Distribuzione Motivi'
+        );
+
+        createChart(
+            document.getElementById('monthlyBookingsChart').getContext('2d'),
+            'line',
+            Object.keys(data.monthlyBookings),
+            Object.values(data.monthlyBookings),
+            'Prenotazioni Mensili'
+        );
+    }
+
+    function populateCarFilter(data) {
+        const carFilter = document.getElementById('carFilter');
+        Object.keys(data.bookingsPerCar).forEach(car => {
+            const option = document.createElement('option');
+            option.value = car;
+            option.textContent = car;
+            carFilter.appendChild(option);
+        });
+    }
+
+    function fetchAndUpdateStats() {
+        fetch('/api/statistics')
+            .then(response => response.json())
+            .then(data => {
+                originalData = data;
+                if (!charts.bookingsPerCarChart) {
+                    populateCarFilter(data);
+                }
+                updateCharts(data);
+
+                // Imposta le date predefinite per il filtro temporale
+                const today = new Date();
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+
+                document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
+                document.getElementById('endDate').valueAsDate = today;
+            })
+            .catch(error => {
+                console.error('Errore nel recupero delle statistiche:', error);
+
+                // Mostra un messaggio di errore all'utente
+                const container = document.querySelector('.container');
+                const errorDiv = document.createElement('div');
+                errorDiv.style.cssText = `
+                    background-color: #fee2e2;
+                    color: #991b1b;
+                    padding: 1rem;
+                    border-radius: 0.5rem;
+                    margin-bottom: 1rem;
+                    text-align: center;
+                `;
+                errorDiv.textContent = 'Si è verificato un errore nel caricamento delle statistiche. Riprova più tardi.';
+
+                // Rimuovi eventuali messaggi di errore precedenti
+                const existingError = container.querySelector('.error-message');
+                if (existingError) {
+                    existingError.remove();
+                }
+
+                errorDiv.classList.add('error-message');
+                container.insertBefore(errorDiv, container.firstChild);
+            });
+    }
+
+    // Caricamento iniziale
+    fetchAndUpdateStats();
+
+    // Aggiornamento automatico ogni 5 minuti
+    setInterval(fetchAndUpdateStats, 5 * 60 * 1000);
+
+    // Gestione responsive del layout
+    window.addEventListener('resize', () => {
+        Object.values(charts).forEach(chart => {
+            if (chart) {
+                chart.resize();
+            }
+        });
+    });
+
+    // Inizializzazione tooltips
+    const tooltips = document.querySelectorAll('[data-tooltip]');
+    tooltips.forEach(tooltip => {
+        tooltip.style.position = 'relative';
+        tooltip.style.cursor = 'help';
+
+        tooltip.addEventListener('mouseover', () => {
+            const tooltipText = tooltip.getAttribute('data-tooltip');
+            const tooltipEl = document.createElement('div');
+            tooltipEl.className = 'tooltip';
+            tooltipEl.textContent = tooltipText;
+            tooltipEl.style.cssText = `
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 0.5rem;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                border-radius: 0.25rem;
+                font-size: 0.875rem;
+                white-space: nowrap;
+                z-index: 10;
+                pointer-events: none;
+            `;
+
+            tooltip.appendChild(tooltipEl);
+        });
+
+        tooltip.addEventListener('mouseout', () => {
+            const tooltipEl = tooltip.querySelector('.tooltip');
+            if (tooltipEl) {
+                tooltipEl.remove();
+            }
+        });
+    });
+</script>
+</body>
+</html>

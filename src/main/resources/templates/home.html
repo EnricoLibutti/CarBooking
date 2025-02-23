@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Car Booking System</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <a href="/statistics.html" class="btn btn-primary">Visualizza Statistiche</a>
     <style>
         body {
             font-family: 'Arial', sans-serif;
             background-color: #f4f4f4;
         }
+
         .container {
             max-width: 1200px;
             margin-top: 20px;
@@ -18,15 +21,18 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         h1 {
             text-align: center;
             color: #333;
             font-size: 1.8rem;
         }
+
         h3 {
             font-size: 1.4rem;
             margin-top: 1rem;
         }
+
         .section-divider {
             margin: 20px 0;
             border-top: 2px solid #eee;
@@ -76,6 +82,7 @@
             background-color: #007bff;
             border-color: #007bff;
         }
+
         .btn-primary:hover {
             background-color: #0056b3;
             border-color: #0056b3;
@@ -158,20 +165,41 @@
         <form id="booking-form-data" class="mt-4">
             <div class="mb-3">
                 <label for="name" class="form-label">Nome:</label>
-                <input type="text" class="form-control" id="name" required>
+                <select class="form-select" id="name" required>
+                    <option value="">Seleziona una persona</option>
+                    <option value="Mamma">Mamma</option>
+                    <option value="Papà">Papà</option>
+                    <option value="Jordi">Jordi</option>
+                    <option value="Enrico">Enrico</option>
+                    <option value="Sergio">Sergio</option>
+                </select>
             </div>
+
             <div class="mb-3">
                 <label for="startDateTime" class="form-label">Data e Ora di Inizio:</label>
                 <input type="datetime-local" class="form-control" id="startDateTime" required>
             </div>
+
             <div class="mb-3">
                 <label for="endDateTime" class="form-label">Data e Ora di Fine:</label>
                 <input type="datetime-local" class="form-control" id="endDateTime" required>
             </div>
+
             <div class="mb-3">
-                <label for="reason" class="form-label">Motivazione:</label>
-                <textarea class="form-control" id="reason" rows="3" required></textarea>
+                <label for="reasonType" class="form-label">Motivazione:</label>
+                <select class="form-select" id="reasonType" required onchange="toggleCustomReason()">
+                    <option value="">Seleziona una motivazione</option>
+                    <option value="Lavoro">Lavoro</option>
+                    <option value="Sporting">Sporting</option>
+                    <option value="Altro">Altro</option>
+                </select>
             </div>
+
+            <div class="mb-3" id="customReasonDiv" style="display: none;">
+                <label for="customReason" class="form-label">Specifica Motivazione:</label>
+                <textarea class="form-control" id="customReason" rows="3"></textarea>
+            </div>
+
             <div class="d-grid gap-2 d-md-flex">
                 <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
                 <button type="button" class="btn btn-secondary" onclick="hideBookingForm()">Annulla</button>
@@ -181,7 +209,6 @@
 </div>
 
 <script th:inline="javascript">
-    // Constants
     const API_ENDPOINTS = {
         CARS: '/api/cars',
         OCCUPIED: '/api/cars/occupied',
@@ -218,6 +245,21 @@
         }
         return `${hours} ${hours === 1 ? 'ora' : 'ore'}`;
     };
+
+    function toggleCustomReason() {
+        const reasonType = document.getElementById("reasonType");
+        const customReasonDiv = document.getElementById("customReasonDiv");
+        const customReason = document.getElementById("customReason");
+
+        if (reasonType.value === "Altro") {
+            customReasonDiv.style.display = "block";
+            customReason.required = true;
+        } else {
+            customReasonDiv.style.display = "none";
+            customReason.required = false;
+            customReason.value = "";
+        }
+    }
 
     // State Management
     class BookingState {
@@ -334,11 +376,10 @@
         static async handleBookingAction(carId, isTerminate) {
             const endpoint = isTerminate ? API_ENDPOINTS.TERMINATE(carId) : API_ENDPOINTS.CANCEL(carId);
             const method = isTerminate ? 'POST' : 'DELETE';
-            return this.fetchWithError(endpoint, { method });
+            return this.fetchWithError(endpoint, {method});
         }
     }
 
-    // UI Rendering
     class BookingUI {
         constructor(state) {
             this.state = state;
@@ -360,7 +401,7 @@
             endInput.value = localISOTime;
 
             this.renderExistingBookings();
-            this.state.elements.bookingForm.scrollIntoView({ behavior: 'smooth' });
+            this.state.elements.bookingForm.scrollIntoView({behavior: 'smooth'});
         }
 
         renderExistingBookings() {
@@ -499,11 +540,22 @@
 
         async handleBookingSubmit(event) {
             event.preventDefault();
+
+            const nameField = document.getElementById("name");
+            const startDateTimeField = document.getElementById("startDateTime");
+            const endDateTimeField = document.getElementById("endDateTime");
+            const reasonField = document.getElementById("reasonType");
+
+            if (!nameField || !startDateTimeField || !endDateTimeField || !reasonField) {
+                console.error("Uno o più campi non sono stati trovati nel DOM.");
+                return;
+            }
+
             const formData = {
-                name: document.getElementById("name").value,
-                startDateTime: document.getElementById("startDateTime").value + 'Z',
-                endDateTime: document.getElementById("endDateTime").value + 'Z',
-                reason: document.getElementById("reason").value
+                name: nameField.value,
+                startDateTime: startDateTimeField.value + 'Z',
+                endDateTime: endDateTimeField.value + 'Z',
+                reason: reasonField.value
             };
 
             try {
@@ -517,7 +569,7 @@
                     API_ENDPOINTS.BOOK(this.state.selectedCarId),
                     {
                         method: "POST",
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify(formData)
                     }
                 );
@@ -560,13 +612,10 @@
         }
     }
 
-    // Initialize application
     const app = new CarBookingApp();
-
-    // Initialize when DOM is loaded
     document.addEventListener('DOMContentLoaded', () => app.initialize());
 
-    // Global functions for HTML access
+
     window.showBookingForm = (carId) => app.ui.showBookingForm(carId);
     window.hideBookingForm = () => app.state.resetBookingForm();
     window.handleBookingAction = (carId, isTerminate) => app.handleBookingAction(carId, isTerminate);
