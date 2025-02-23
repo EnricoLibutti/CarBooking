@@ -57,7 +57,7 @@ public class CarController {
 
     @GetMapping("/occupied")
     public ResponseEntity<List<BookingDTO>> getCurrentlyOccupiedCars() {
-        LocalDateTime now = LocalDateTime.now(ROME_ZONE);
+        LocalDateTime now = LocalDateTime.now(ROME_ZONE).atZone(ROME_ZONE).withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
         List<BookingDTO> occupiedCars = bookingRepository
                 .findByActiveTrueAndStartDateTimeLessThanEqualAndEndDateTimeAfter(now, now)
                 .stream()
@@ -65,6 +65,7 @@ public class CarController {
                 .collect(Collectors.toList());
         return ResponseEntity.ok(occupiedCars);
     }
+
 
     @GetMapping("/future-bookings")
     public ResponseEntity<List<BookingDTO>> getFutureBookedCars() {

@@ -4,11 +4,8 @@ import lombok.RequiredArgsConstructor;
 import me.enrico.carbooking.dto.StatisticsDTO;
 import me.enrico.carbooking.model.Booking;
 import me.enrico.carbooking.repositories.BookingRepository;
-import me.enrico.carbooking.repositories.CarRepository;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,7 +19,7 @@ public class StatisticsService {
     public StatisticsDTO getStatistics() {
         List<Booking> allBookings = bookingRepository.findAll();
 
-        // Calcola statistiche
+        // Statistiche per auto
         Map<String, Long> bookingsPerCar = allBookings.stream()
                 .collect(Collectors.groupingBy(
                         booking -> booking.getCar().getName(),
@@ -35,18 +32,39 @@ public class StatisticsService {
                         Collectors.summingDouble(Booking::getDuration)
                 ));
 
+        // Statistiche per utente
         Map<String, Long> bookingsPerUser = allBookings.stream()
                 .collect(Collectors.groupingBy(
                         Booking::getBookedByName,
                         Collectors.counting()
                 ));
 
+        Map<String, Double> hoursPerUser = allBookings.stream()
+                .collect(Collectors.groupingBy(
+                        Booking::getBookedByName,
+                        Collectors.summingDouble(Booking::getDuration)
+                ));
+
+        Map<String, String> mostUsedCarPerUser = allBookings.stream()
+                .collect(Collectors.groupingBy(
+                        Booking::getBookedByName,
+                        Collectors.collectingAndThen(
+                                Collectors.groupingBy(booking -> booking.getCar().getName(), Collectors.counting()),
+                                carMap -> carMap.entrySet().stream()
+                                        .max(Map.Entry.comparingByValue())
+                                        .map(Map.Entry::getKey)
+                                        .orElse("Nessuna auto")
+                        )
+                ));
+
+        // Distribuzione motivi prenotazione
         Map<String, Long> reasonDistribution = allBookings.stream()
                 .collect(Collectors.groupingBy(
                         Booking::getReason,
                         Collectors.counting()
                 ));
 
+        // Prenotazioni mensili
         Map<String, Long> monthlyBookings = allBookings.stream()
                 .collect(Collectors.groupingBy(
                         booking -> String.format("%d-%02d",
@@ -64,6 +82,8 @@ public class StatisticsService {
                 .bookingsPerCar(bookingsPerCar)
                 .hoursPerCar(hoursPerCar)
                 .bookingsPerUser(bookingsPerUser)
+                .hoursPerUser(hoursPerUser)
+                .mostUsedCarPerUser(mostUsedCarPerUser)
                 .reasonDistribution(reasonDistribution)
                 .monthlyBookings(monthlyBookings)
                 .avgDuration(avgDuration)

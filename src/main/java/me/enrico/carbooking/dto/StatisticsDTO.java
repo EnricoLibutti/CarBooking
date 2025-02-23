@@ -11,6 +11,8 @@ public class StatisticsDTO {
     private Map<String, Long> bookingsPerCar;
     private Map<String, Double> hoursPerCar;
     private Map<String, Long> bookingsPerUser;
+    private Map<String, Double> hoursPerUser;
+    private Map<String, String> mostUsedCarPerUser;
     private Map<String, Long> reasonDistribution;
     private Map<String, Long> monthlyBookings;
     private double avgDuration;

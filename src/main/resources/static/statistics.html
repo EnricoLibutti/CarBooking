@@ -183,6 +183,18 @@
                 <option value="all">Tutte le auto</option>
             </select>
         </div>
+        <<!--div class="filter-group">
+            <label for="userFilter">Utente</label>
+            <select id="userFilter">
+                <option value="all">Tutti gli utenti</option>
+            </select>
+        </div>-->
+        <!--<div class="filter-group">
+            <label for="reasonFilter">Motivo</label>
+            <select id="reasonFilter">
+                <option value="all">Tutti i motivi</option>
+            </select>
+        </div>-->
         <div class="filter-group">
             <label for="startDate">Data Inizio</label>
             <input type="date" id="startDate" onchange="updateFilters()">
@@ -248,6 +260,11 @@
             </div>
         </div>
     </div>
+
+    <button class="refresh-button" onclick="fetchAndUpdateStats()">
+        <i class="fas fa-sync-alt"></i>
+    </button>
+
 </div>
 
 <script>
