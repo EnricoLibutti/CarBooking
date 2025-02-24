@@ -215,11 +215,11 @@
         FUTURE_BOOKINGS: '/api/cars/future-bookings',
         BOOK: (id) => `/api/cars/book/${id}`,
         TERMINATE: (id) => `/api/cars/terminate/${id}`,
-        CANCEL: (id) => `/api/calls/cancel/${id}`
+        CANCEL: (id) => `/api/cars/cancel/${id}`
     };
 
     const TIME_CONSTANTS = {
-        REFRESH_INTERVAL: 60000,
+        REFRESH_INTERVAL: 30000,
         MARGIN_MINUTES: 15
     };
 
@@ -234,6 +234,12 @@
             minute: '2-digit'
         });
     };
+
+    function convertToUTC(localDateTime) {
+        const date = new Date(localDateTime);
+        const utcDate = new Date(date.toLocaleString('it-IT', { timeZone: 'UTC' }));
+        return utcDate.toISOString();
+    }
 
     const formatDuration = (hours) => {
         if (hours >= 24) {
@@ -516,7 +522,7 @@
         }
     }
 
-    // Main Application
+
     class CarBookingApp {
         constructor() {
             this.state = new BookingState();
@@ -545,17 +551,17 @@
             const startDateTimeField = document.getElementById("startDateTime");
             const endDateTimeField = document.getElementById("endDateTime");
             const reasonField = document.getElementById("reasonType");
-
-            if (!nameField || !startDateTimeField || !endDateTimeField || !reasonField) {
-                console.error("Uno o più campi non sono stati trovati nel DOM.");
-                return;
-            }
+            const reasonType = reasonField.value;
+            const customReasonField = document.getElementById("customReason");
+            const finalReason = reasonType === "Altro" && customReasonField
+                ? customReasonField.value
+                : reasonType;
 
             const formData = {
                 name: nameField.value,
                 startDateTime: startDateTimeField.value + 'Z',
                 endDateTime: endDateTimeField.value + 'Z',
-                reason: reasonField.value
+                reason: finalReason
             };
 
             try {

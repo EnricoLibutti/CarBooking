@@ -6,7 +6,6 @@
     <title>Statistiche Prenotazioni Auto</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
-    <a href="/" class="btn btn-primary">Pagina Principale</a>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -38,6 +37,26 @@
         .container {
             max-width: 1400px;
             margin: 0 auto;
+        }
+
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .search-input {
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            min-width: 250px;
         }
 
         .filters {
@@ -97,21 +116,6 @@
             gap: 24px;
         }
 
-        h1 {
-            color: var(--text-primary);
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-
-        h2 {
-            color: var(--text-secondary);
-            margin-top: 0;
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-
         .summary-stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -141,26 +145,20 @@
             color: var(--primary-color);
         }
 
-        .legend-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 10px;
+        .most-used-cars {
+            margin-top: 20px;
         }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
+        .most-used-cars-list {
+            list-style: none;
+            padding: 0;
         }
 
-        .legend-color {
-            width: 12px;
-            height: 12px;
-            border-radius: 3px;
-            margin-right: 6px;
+        .most-used-cars-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e2e8f0;
         }
 
         @media (max-width: 768px) {
@@ -171,12 +169,31 @@
             .summary-stats {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .header-container {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .search-container {
+                width: 100%;
+            }
+
+            .search-input {
+                flex-grow: 1;
+            }
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <h1>Statistiche Prenotazioni Auto</h1>
+    <div class="header-container">
+        <h1>Statistiche Prenotazioni Auto</h1>
+        <div class="search-container">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cerca per nome utente o auto...">
+            <a href="/" class="btn btn-primary">Pagina Principale</a>
+        </div>
+    </div>
 
     <div class="filters">
         <div class="filter-group">
@@ -195,18 +212,18 @@
                 <option value="all">Tutte le auto</option>
             </select>
         </div>
-        <<!--div class="filter-group">
+        <div class="filter-group">
             <label for="userFilter">Utente</label>
-            <select id="userFilter">
+            <select id="userFilter" onchange="updateFilters()">
                 <option value="all">Tutti gli utenti</option>
             </select>
-        </div>-->
-        <!--<div class="filter-group">
+        </div>
+        <div class="filter-group">
             <label for="reasonFilter">Motivo</label>
-            <select id="reasonFilter">
+            <select id="reasonFilter" onchange="updateFilters()">
                 <option value="all">Tutti i motivi</option>
             </select>
-        </div>-->
+        </div>
         <div class="filter-group">
             <label for="startDate">Data Inizio</label>
             <input type="date" id="startDate" onchange="updateFilters()">
@@ -271,17 +288,22 @@
                 <canvas id="monthlyBookingsChart"></canvas>
             </div>
         </div>
+
+        <div class="card">
+            <h2>Auto Più Utilizzate per Utente</h2>
+            <div id="mostUsedCarPerUser" class="most-used-cars">
+                <ul class="most-used-cars-list" id="mostUsedCarsList">
+                    <!-- Populated dynamically -->
+                </ul>
+            </div>
+        </div>
     </div>
-
-    <button class="refresh-button" onclick="fetchAndUpdateStats()">
-        <i class="fas fa-sync-alt"></i>
-    </button>
-
 </div>
 
 <script>
     let charts = {};
     let originalData = null;
+    let filteredData = null;
 
     const chartColors = [
         'rgba(37, 99, 235, 0.5)',   // Blue
@@ -337,52 +359,89 @@
         return charts[ctx.canvas.id];
     }
 
-    function updateFilters() {
-        const dateRange = document.getElementById('dateRange').value;
-        const carFilter = document.getElementById('carFilter').value;
-        const startDate = document.getElementById('startDate').value;
-        const endDate = document.getElementById('endDate').value;
+    function populateFilters(data) {
+        // Populate car filter
+        const carFilter = document.getElementById('carFilter');
+        carFilter.innerHTML = '<option value="all">Tutte le auto</option>';
+        Object.keys(data.bookingsPerCar).forEach(car => {
+            const option = document.createElement('option');
+            option.value = car;
+            option.textContent = car;
+            carFilter.appendChild(option);
+        });
 
-        let filteredData = {...originalData};
+        // Populate user filter
+        const userFilter = document.getElementById('userFilter');
+        userFilter.innerHTML = '<option value="all">Tutti gli utenti</option>';
+        Object.keys(data.bookingsPerUser).forEach(user => {
+            const option = document.createElement('option');
+            option.value = user;
+            option.textContent = user;
+            userFilter.appendChild(option);
+        });
 
-        if (startDate && endDate) {
-            // Filtra per date personalizzate
-            const start = new Date(startDate);
-            const end = new Date(endDate);
+        // Populate reason filter
+        const reasonFilter = document.getElementById('reasonFilter');
+        reasonFilter.innerHTML = '<option value="all">Tutti i motivi</option>';
+        Object.keys(data.reasonDistribution).forEach(reason => {
+            const option = document.createElement('option');
+            option.value = reason;
+            option.textContent = reason;
+            reasonFilter.appendChild(option);
+        });
+    }
 
-            Object.keys(filteredData.monthlyBookings).forEach(key => {
-                const [year, month] = key.split('-');
-                const date = new Date(parseInt(year), parseInt(month) - 1);
-                if (date < start || date > end) {
-                    delete filteredData.monthlyBookings[key];
-                }
-            });
-        } else if (dateRange !== 'all') {
-            // Filtra per intervallo predefinito
-            const daysToSubtract = parseInt(dateRange);
-            const cutoffDate = new Date();
-            cutoffDate.setDate(cutoffDate.getDate() - daysToSubtract);
+    function updateMostUsedCars(data) {
+        const mostUsedCarsList = document.getElementById('mostUsedCarsList');
+        mostUsedCarsList.innerHTML = '';
 
-            Object.keys(filteredData.monthlyBookings).forEach(key => {
-                const [year, month] = key.split('-');
-                const date = new Date(parseInt(year), parseInt(month) - 1);
-                if (date < cutoffDate) {
-                    delete filteredData.monthlyBookings[key];
-                }
-            });
-        }
+        Object.entries(data.mostUsedCarPerUser).forEach(([user, car]) => {
+            const li = document.createElement('li');
+            li.className = 'most-used-cars-item';
+            li.innerHTML = `
+                <span>${user}</span>
+                <strong>${car}</strong>
+            `;
+            mostUsedCarsList.appendChild(li);
+        });
+    }
 
-        if (carFilter !== 'all') {
-            // Filtra per auto specifica
-            filteredData.bookingsPerCar = {
-                [carFilter]: originalData.bookingsPerCar[carFilter]
-            };
-            filteredData.hoursPerCar = {
-                [carFilter]: originalData.hoursPerCar[carFilter]
-            };
-        }
+    function filterDataBySearch(data, searchTerm) {
+        if (!searchTerm) return data;
 
-        updateCharts(filteredData);
+        const searchLower = searchTerm.toLowerCase();
+        const filtered = {...data};
+
+        // Filter bookingsPerCar
+        filtered.bookingsPerCar = Object.fromEntries(
+            Object.entries(data.bookingsPerCar).filter(([car]) =>
+                car.toLowerCase().includes(searchLower)
+            )
+        );
+
+        // Filter hoursPerCar
+        filtered.hoursPerCar = Object.fromEntries(
+            Object.entries(data.hoursPerCar).filter(([car]) =>
+                car.toLowerCase().includes(searchLower)
+            )
+        );
+
+        // Filter bookingsPerUser
+        filtered.bookingsPerUser = Object.fromEntries(
+            Object.entries(data.bookingsPerUser).filter(([user]) =>
+                user.toLowerCase().includes(searchLower)
+            )
+        );
+
+        // Filter mostUsedCarPerUser
+        filtered.mostUsedCarPerUser = Object.fromEntries(
+            Object.entries(data.mostUsedCarPerUser).filter(([user]) =>
+                user.toLowerCase().includes(searchLower) ||
+                data.mostUsedCarPerUser[user].toLowerCase().includes(searchLower)
+            )
+        );
+
+        return filtered;
     }
 
     function updateCharts(data) {
@@ -392,12 +451,12 @@
 
         // Trova l'auto più prenotata
         const mostBookedCar = Object.entries(data.bookingsPerCar)
-            .reduce((a, b) => a[1] > b[1] ? a : b);
+            .reduce((a, b) => a[1] > b[1] ? a : b, ['', 0]);
         document.getElementById('mostBookedCar').textContent = mostBookedCar[0];
 
         // Trova il motivo più comune
         const mostCommonReason = Object.entries(data.reasonDistribution)
-            .reduce((a, b) => a[1] > b[1] ? a : b);
+            .reduce((a, b) => a[1] > b[1] ? a : b, ['', 0]);
         document.getElementById('mostCommonReason').textContent = mostCommonReason[0];
 
         // Aggiorna i grafici
@@ -440,16 +499,101 @@
             Object.values(data.monthlyBookings),
             'Prenotazioni Mensili'
         );
+
+        // Aggiorna la lista delle auto più utilizzate per utente
+        updateMostUsedCars(data);
     }
 
-    function populateCarFilter(data) {
-        const carFilter = document.getElementById('carFilter');
-        Object.keys(data.bookingsPerCar).forEach(car => {
-            const option = document.createElement('option');
-            option.value = car;
-            option.textContent = car;
-            carFilter.appendChild(option);
-        });
+    function updateFilters() {
+        const dateRange = document.getElementById('dateRange').value;
+        const carFilter = document.getElementById('carFilter').value;
+        const userFilter = document.getElementById('userFilter').value;
+        const reasonFilter = document.getElementById('reasonFilter').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        const searchTerm = document.getElementById('searchInput').value;
+
+        let filteredData = {...originalData};
+
+        // Applica filtri temporali
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            filteredData.monthlyBookings = Object.fromEntries(
+                Object.entries(filteredData.monthlyBookings).filter(([key]) => {
+                    const [year, month] = key.split('-');
+                    const date = new Date(parseInt(year), parseInt(month) - 1);
+                    return date >= start && date <= end;
+                })
+            );
+        } else if (dateRange !== 'all') {
+            const daysToSubtract = parseInt(dateRange);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - daysToSubtract);
+
+            filteredData.monthlyBookings = Object.fromEntries(
+                Object.entries(filteredData.monthlyBookings).filter(([key]) => {
+                    const [year, month] = key.split('-');
+                    const date = new Date(parseInt(year), parseInt(month) - 1);
+                    return date >= cutoffDate;
+                })
+            );
+        }
+
+        // Applica filtro per auto
+        if (carFilter !== 'all') {
+            filteredData.bookingsPerCar = {
+                [carFilter]: originalData.bookingsPerCar[carFilter]
+            };
+            filteredData.hoursPerCar = {
+                [carFilter]: originalData.hoursPerCar[carFilter]
+            };
+            filteredData.mostUsedCarPerUser = Object.fromEntries(
+                Object.entries(originalData.mostUsedCarPerUser)
+                    .filter(([_, car]) => car === carFilter)
+            );
+        }
+
+        // Applica filtro per utente
+        if (userFilter !== 'all') {
+            filteredData.bookingsPerUser = {
+                [userFilter]: originalData.bookingsPerUser[userFilter]
+            };
+            filteredData.mostUsedCarPerUser = {
+                [userFilter]: originalData.mostUsedCarPerUser[userFilter]
+            };
+        }
+
+        // Applica filtro per motivo
+        if (reasonFilter !== 'all') {
+            filteredData.reasonDistribution = {
+                [reasonFilter]: originalData.reasonDistribution[reasonFilter]
+            };
+        }
+
+        // Applica ricerca per testo
+        if (searchTerm) {
+            filteredData = filterDataBySearch(filteredData, searchTerm);
+        }
+
+        updateCharts(filteredData);
+    }
+
+    // Gestione della ricerca
+    document.getElementById('searchInput').addEventListener('input', debounce(updateFilters, 300));
+
+    // Funzione di debounce per ottimizzare la ricerca
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
     }
 
     function fetchAndUpdateStats() {
@@ -458,7 +602,7 @@
             .then(data => {
                 originalData = data;
                 if (!charts.bookingsPerCarChart) {
-                    populateCarFilter(data);
+                    populateFilters(data);
                 }
                 updateCharts(data);
 
@@ -472,32 +616,33 @@
             })
             .catch(error => {
                 console.error('Errore nel recupero delle statistiche:', error);
-
-                // Mostra un messaggio di errore all'utente
-                const container = document.querySelector('.container');
-                const errorDiv = document.createElement('div');
-                errorDiv.style.cssText = `
-                    background-color: #fee2e2;
-                    color: #991b1b;
-                    padding: 1rem;
-                    border-radius: 0.5rem;
-                    margin-bottom: 1rem;
-                    text-align: center;
-                `;
-                errorDiv.textContent = 'Si è verificato un errore nel caricamento delle statistiche. Riprova più tardi.';
-
-                // Rimuovi eventuali messaggi di errore precedenti
-                const existingError = container.querySelector('.error-message');
-                if (existingError) {
-                    existingError.remove();
-                }
-
-                errorDiv.classList.add('error-message');
-                container.insertBefore(errorDiv, container.firstChild);
+                showError('Si è verificato un errore nel caricamento delle statistiche. Riprova più tardi.');
             });
     }
 
-    // Caricamento iniziale
+    function showError(message) {
+        const container = document.querySelector('.container');
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        `;
+        errorDiv.textContent = message;
+        errorDiv.classList.add('error-message');
+
+        const existingError = container.querySelector('.error-message');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        container.insertBefore(errorDiv, container.firstChild);
+    }
+
+    // Inizializzazione
     fetchAndUpdateStats();
 
     // Aggiornamento automatico ogni 5 minuti
@@ -508,43 +653,6 @@
         Object.values(charts).forEach(chart => {
             if (chart) {
                 chart.resize();
-            }
-        });
-    });
-
-    // Inizializzazione tooltips
-    const tooltips = document.querySelectorAll('[data-tooltip]');
-    tooltips.forEach(tooltip => {
-        tooltip.style.position = 'relative';
-        tooltip.style.cursor = 'help';
-
-        tooltip.addEventListener('mouseover', () => {
-            const tooltipText = tooltip.getAttribute('data-tooltip');
-            const tooltipEl = document.createElement('div');
-            tooltipEl.className = 'tooltip';
-            tooltipEl.textContent = tooltipText;
-            tooltipEl.style.cssText = `
-                position: absolute;
-                bottom: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 0.5rem;
-                background: rgba(0, 0, 0, 0.8);
-                color: white;
-                border-radius: 0.25rem;
-                font-size: 0.875rem;
-                white-space: nowrap;
-                z-index: 10;
-                pointer-events: none;
-            `;
-
-            tooltip.appendChild(tooltipEl);
-        });
-
-        tooltip.addEventListener('mouseout', () => {
-            const tooltipEl = tooltip.querySelector('.tooltip');
-            if (tooltipEl) {
-                tooltipEl.remove();
             }
         });
     });

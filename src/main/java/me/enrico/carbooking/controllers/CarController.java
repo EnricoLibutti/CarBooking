@@ -10,6 +10,8 @@ import me.enrico.carbooking.repositories.BookingRepository;
 import me.enrico.carbooking.repositories.CarRepository;
 import me.enrico.carbooking.request.CarBookingRequest;
 import me.enrico.carbooking.service.BookingService;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,14 +31,44 @@ public class CarController {
     private final BookingService bookingService;
     private static final ZoneId ROME_ZONE = ZoneId.of("Europe/Rome");
 
+
+    @Cacheable("cars")
     @GetMapping
     public ResponseEntity<List<CarDTO>> getAllCars() {
-        List<CarDTO> cars = carRepository.findAll().stream()
+        List<Car> cars = carRepository.findAllWithActiveBookings();
+        return ResponseEntity.ok(cars.stream()
                 .map(this::convertToCarDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(cars);
+                .collect(Collectors.toList()));
     }
 
+
+    @Cacheable("occupiedCars")
+    @GetMapping("/occupied")
+    public ResponseEntity<List<BookingDTO>> getCurrentlyOccupiedCars() {
+        LocalDateTime now = LocalDateTime.now(ROME_ZONE)
+                .atZone(ROME_ZONE)
+                .withZoneSameInstant(ZoneId.of("UTC"))
+                .toLocalDateTime();
+
+        List<Booking> occupiedCars = bookingRepository
+                .findCurrentlyOccupiedWithCars(now);
+        return ResponseEntity.ok(occupiedCars.stream()
+                .map(this::convertToBookingDTO)
+                .collect(Collectors.toList()));
+    }
+
+    @Cacheable("futureBookings")
+    @GetMapping("/future-bookings")
+    public ResponseEntity<List<BookingDTO>> getFutureBookedCars() {
+        LocalDateTime now = LocalDateTime.now(ROME_ZONE);
+        List<Booking> futureBookings = bookingRepository
+                .findFutureBookingsWithCars(now);
+        return ResponseEntity.ok(futureBookings.stream()
+                .map(this::convertToBookingDTO)
+                .collect(Collectors.toList()));
+    }
+
+    @CacheEvict(value = {"cars", "occupiedCars", "futureBookings"}, allEntries = true)
     @PostMapping("/book/{id}")
     public ResponseEntity<String> bookCar(
             @PathVariable Long id,
@@ -55,34 +87,14 @@ public class CarController {
         }
     }
 
-    @GetMapping("/occupied")
-    public ResponseEntity<List<BookingDTO>> getCurrentlyOccupiedCars() {
-        LocalDateTime now = LocalDateTime.now(ROME_ZONE).atZone(ROME_ZONE).withZoneSameInstant(ZoneId.of("UTC")).toLocalDateTime();
-        List<BookingDTO> occupiedCars = bookingRepository
-                .findByActiveTrueAndStartDateTimeLessThanEqualAndEndDateTimeAfter(now, now)
-                .stream()
-                .map(this::convertToBookingDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(occupiedCars);
-    }
 
-
-    @GetMapping("/future-bookings")
-    public ResponseEntity<List<BookingDTO>> getFutureBookedCars() {
-        LocalDateTime now = LocalDateTime.now(ROME_ZONE);
-        List<BookingDTO> futureBookings = bookingRepository
-                .findByActiveTrueAndStartDateTimeAfter(now)
-                .stream()
-                .map(this::convertToBookingDTO)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(futureBookings);
-    }
-
+    @CacheEvict(value = {"cars", "occupiedCars", "futureBookings"}, allEntries = true)
     @PostMapping("/terminate/{id}")
     public ResponseEntity<String> terminateBooking(@PathVariable Long id) {
         return handleBookingStatusChange(id, "terminata");
     }
 
+    @CacheEvict(value = {"cars", "occupiedCars", "futureBookings"}, allEntries = true)
     @DeleteMapping("/cancel/{id}")
     public ResponseEntity<String> cancelBooking(@PathVariable Long id) {
         return handleBookingStatusChange(id, "annullata");
