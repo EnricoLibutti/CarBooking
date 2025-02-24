@@ -360,7 +360,7 @@
     }
 
     function populateFilters(data) {
-
+        // Populate car filter
         const carFilter = document.getElementById('carFilter');
         carFilter.innerHTML = '<option value="all">Tutte le auto</option>';
         Object.keys(data.bookingsPerCar).forEach(car => {
@@ -370,7 +370,7 @@
             carFilter.appendChild(option);
         });
 
-
+        // Populate user filter
         const userFilter = document.getElementById('userFilter');
         userFilter.innerHTML = '<option value="all">Tutti gli utenti</option>';
         Object.keys(data.bookingsPerUser).forEach(user => {
@@ -380,7 +380,7 @@
             userFilter.appendChild(option);
         });
 
-
+        // Populate reason filter
         const reasonFilter = document.getElementById('reasonFilter');
         reasonFilter.innerHTML = '<option value="all">Tutti i motivi</option>';
         Object.keys(data.reasonDistribution).forEach(reason => {
@@ -412,28 +412,28 @@
         const searchLower = searchTerm.toLowerCase();
         const filtered = {...data};
 
-
+        // Filter bookingsPerCar
         filtered.bookingsPerCar = Object.fromEntries(
             Object.entries(data.bookingsPerCar).filter(([car]) =>
                 car.toLowerCase().includes(searchLower)
             )
         );
 
-
+        // Filter hoursPerCar
         filtered.hoursPerCar = Object.fromEntries(
             Object.entries(data.hoursPerCar).filter(([car]) =>
                 car.toLowerCase().includes(searchLower)
             )
         );
 
-
+        // Filter bookingsPerUser
         filtered.bookingsPerUser = Object.fromEntries(
             Object.entries(data.bookingsPerUser).filter(([user]) =>
                 user.toLowerCase().includes(searchLower)
             )
         );
 
-
+        // Filter mostUsedCarPerUser
         filtered.mostUsedCarPerUser = Object.fromEntries(
             Object.entries(data.mostUsedCarPerUser).filter(([user]) =>
                 user.toLowerCase().includes(searchLower) ||
@@ -445,21 +445,21 @@
     }
 
     function updateCharts(data) {
-
+        // Aggiorna statistiche di riepilogo
         document.getElementById('totalBookings').textContent = data.totalBookings;
         document.getElementById('avgDuration').textContent = data.avgDuration.toFixed(1);
 
-
+        // Trova l'auto più prenotata
         const mostBookedCar = Object.entries(data.bookingsPerCar)
             .reduce((a, b) => a[1] > b[1] ? a : b, ['', 0]);
         document.getElementById('mostBookedCar').textContent = mostBookedCar[0];
 
-
+        // Trova il motivo più comune
         const mostCommonReason = Object.entries(data.reasonDistribution)
             .reduce((a, b) => a[1] > b[1] ? a : b, ['', 0]);
         document.getElementById('mostCommonReason').textContent = mostCommonReason[0];
 
-
+        // Aggiorna i grafici
         createChart(
             document.getElementById('bookingsPerCarChart').getContext('2d'),
             'bar',
@@ -661,10 +661,14 @@
 
         container.insertBefore(errorDiv, container.firstChild);
     }
+
+    // Inizializzazione
     fetchAndUpdateStats();
 
+    // Aggiornamento automatico ogni 5 minuti
     setInterval(fetchAndUpdateStats, 5 * 60 * 1000);
 
+    // Gestione responsive del layout
     window.addEventListener('resize', () => {
         Object.values(charts).forEach(chart => {
             if (chart) {
