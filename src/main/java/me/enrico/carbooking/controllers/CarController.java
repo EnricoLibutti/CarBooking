@@ -35,7 +35,7 @@ public class CarController {
     @Cacheable("cars")
     @GetMapping
     public ResponseEntity<List<CarDTO>> getAllCars() {
-        List<Car> cars = carRepository.findAllWithActiveBookings();
+        List<Car> cars = carRepository.findAll();
         return ResponseEntity.ok(cars.stream()
                 .map(this::convertToCarDTO)
                 .collect(Collectors.toList()));
@@ -45,11 +45,7 @@ public class CarController {
     @Cacheable("occupiedCars")
     @GetMapping("/occupied")
     public ResponseEntity<List<BookingDTO>> getCurrentlyOccupiedCars() {
-        LocalDateTime now = LocalDateTime.now(ROME_ZONE)
-                .atZone(ROME_ZONE)
-                .withZoneSameInstant(ZoneId.of("UTC"))
-                .toLocalDateTime();
-
+        LocalDateTime now = LocalDateTime.now(ROME_ZONE);
         List<Booking> occupiedCars = bookingRepository
                 .findCurrentlyOccupiedWithCars(now);
         return ResponseEntity.ok(occupiedCars.stream()
