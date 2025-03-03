@@ -207,21 +207,9 @@
             </select>
         </div>
         <div class="filter-group">
-            <label for="carFilter">Auto</label>
-            <select id="carFilter" onchange="updateFilters()">
-                <option value="all">Tutte le auto</option>
-            </select>
-        </div>
-        <div class="filter-group">
             <label for="userFilter">Utente</label>
             <select id="userFilter" onchange="updateFilters()">
                 <option value="all">Tutti gli utenti</option>
-            </select>
-        </div>
-        <div class="filter-group">
-            <label for="reasonFilter">Motivo</label>
-            <select id="reasonFilter" onchange="updateFilters()">
-                <option value="all">Tutti i motivi</option>
             </select>
         </div>
         <div class="filter-group">
@@ -361,15 +349,6 @@
 
     function populateFilters(data) {
 
-        const carFilter = document.getElementById('carFilter');
-        carFilter.innerHTML = '<option value="all">Tutte le auto</option>';
-        Object.keys(data.bookingsPerCar).forEach(car => {
-            const option = document.createElement('option');
-            option.value = car;
-            option.textContent = car;
-            carFilter.appendChild(option);
-        });
-
 
         const userFilter = document.getElementById('userFilter');
         userFilter.innerHTML = '<option value="all">Tutti gli utenti</option>';
@@ -378,16 +357,6 @@
             option.value = user;
             option.textContent = user;
             userFilter.appendChild(option);
-        });
-
-
-        const reasonFilter = document.getElementById('reasonFilter');
-        reasonFilter.innerHTML = '<option value="all">Tutti i motivi</option>';
-        Object.keys(data.reasonDistribution).forEach(reason => {
-            const option = document.createElement('option');
-            option.value = reason;
-            option.textContent = reason;
-            reasonFilter.appendChild(option);
         });
     }
 
@@ -506,9 +475,7 @@
 
     function updateFilters() {
         const dateRange = document.getElementById('dateRange').value;
-        const carFilter = document.getElementById('carFilter').value;
         const userFilter = document.getElementById('userFilter').value;
-        const reasonFilter = document.getElementById('reasonFilter').value;
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         const searchTerm = document.getElementById('searchInput').value;
@@ -542,24 +509,6 @@
             );
         }
 
-        if (carFilter !== 'all') {
-            filteredData.bookingsPerCar = {
-                [carFilter]: originalData.bookingsPerCar[carFilter]
-            };
-            filteredData.hoursPerCar = {
-                [carFilter]: originalData.hoursPerCar[carFilter]
-            };
-
-
-            filteredData.mostUsedCarPerUser = Object.fromEntries(
-                Object.entries(originalData.mostUsedCarPerUser)
-                    .filter(([_, car]) => car === carFilter)
-            );
-
-
-            filteredData.totalBookings = originalData.bookingsPerCar[carFilter];
-        }
-
 
         if (userFilter !== 'all') {
             filteredData.bookingsPerUser = {
@@ -576,16 +525,6 @@
 
             filteredData.totalBookings = originalData.bookingsPerUser[userFilter];
         }
-
-
-        if (reasonFilter !== 'all') {
-            filteredData.reasonDistribution = {
-                [reasonFilter]: originalData.reasonDistribution[reasonFilter]
-            };
-
-            filteredData.totalBookings = originalData.reasonDistribution[reasonFilter];
-        }
-
 
         if (searchTerm) {
             filteredData = filterDataBySearch(filteredData, searchTerm);
