@@ -9,6 +9,7 @@ import me.enrico.carbooking.request.CarBookingRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -53,8 +54,11 @@ public class BookingService {
 
     private void checkForOverlappingBookings(Long carId, CarBookingRequest request) {
         List<Booking> existingBookings = bookingRepository.findByCarIdAndActiveTrue(carId);
+        LocalDateTime requestStart = request.getStartDateTime().atZone(ROME_ZONE).toLocalDateTime();
+        LocalDateTime requestEnd = request.getEndDateTime().atZone(ROME_ZONE).toLocalDateTime();
+
         boolean hasOverlap = existingBookings.stream()
-                .anyMatch(booking -> booking.overlaps(request.getStartDateTime(), request.getEndDateTime()));
+                .anyMatch(booking -> booking.overlaps(requestStart, requestEnd));
 
         if (hasOverlap) {
             throw new IllegalArgumentException("L'auto è già prenotata per il periodo selezionato!");
