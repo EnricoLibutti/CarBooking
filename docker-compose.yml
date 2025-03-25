@@ -1,28 +1,14 @@
 version: '3.8'
 
 services:
-  mysql:
-    image: mysql:latest
-    container_name: carbooking-mysql
-    #restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: libutti
-      MYSQL_DATABASE: carbooking
-    ports:
-      - "3306:3306"
-    volumes:
-      - mysql-data:/var/lib/mysql
-
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: stackoverrage/carbooking:latest
     container_name: carbooking-app
     restart: always
     ports:
       - "8080:8080"
-    depends_on:
-      - mysql
-
-volumes:
-  mysql-data:
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://192.168.1.28:3306/carbooking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=enrico
+      - SPRING_DATASOURCE_PASSWORD=enrico
+    network_mode: "host"
