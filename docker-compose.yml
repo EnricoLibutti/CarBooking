@@ -6,7 +6,7 @@ services:
     container_name: carbooking-app
     restart: always
     ports:
-      - "8080:8080"
+      - "8081:8081"
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://192.168.1.28:3306/carbooking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       - SPRING_DATASOURCE_USERNAME=enrico

@@ -29,42 +29,42 @@ public class DataLoader {
 
             // Caricamento utenti di default
             if (userRepository.count() == 0) {
-                User enrico = new User(
+                User adminUser = new User(
                         "enrico",
                         passwordEncoder.encode("enrico"),
                         "Enrico",
                         "Libutti",
                         Set.of(Role.ROLE_ADMIN, Role.ROLE_USER)
                 );
-                userRepository.save(enrico);
+                userRepository.save(adminUser);
 
-                User claudio = new User(
+                User regularUser = new User(
                         "claudio",
                         passwordEncoder.encode("pippo123"), // Codifica la password
                         "Claudio",
                         "Libutti",
                         Set.of(Role.ROLE_USER)
                 );
-                userRepository.save(claudio);
+                userRepository.save(regularUser);
 
                 // Aggiungi altri membri della famiglia come utenti
-                User jordi = new User(
+                User enrico = new User(
                         "jordi",
                         passwordEncoder.encode("password123"),
                         "Jordi",
                         "Libutti",
                         Set.of(Role.ROLE_USER)
                 );
-                userRepository.save(jordi);
+                userRepository.save(enrico);
 
-                User sergio = new User(
+                User maria = new User(
                         "sergio",
                         passwordEncoder.encode("password123"),
                         "Sergio",
                         "Libutti",
                         Set.of(Role.ROLE_USER)
                 );
-                userRepository.save(sergio);
+                userRepository.save(maria);
             }
         };
     }

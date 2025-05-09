@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class CarBookingRequest {
-    private String name;
+    // Rimosso: private String name;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
     private String reason;

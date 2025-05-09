@@ -1,44 +1,94 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="it" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Car Booking System</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <a href="/statistics.html" class="btn btn-primary">Visualizza Statistiche</a>
+    <title>Car Booking System - Home</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" th:href="@{/favicon.ico}">
     <style>
         body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa; /* Sfondo leggermente più chiaro */
         }
 
-        .container {
-            max-width: 1200px;
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,.1);
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+        }
+
+        .container-main { /* Rinominato per evitare conflitti se Bootstrap usa .container internamente */
             margin-top: 20px;
-            background-color: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
         }
 
-        h1 {
+        .card {
+            margin-bottom: 2rem;
+            border: none; /* Rimuove il bordo predefinito delle card */
+            border-radius: 0.75rem; /* Angoli più arrotondati */
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); /* Ombra più morbida */
+        }
+
+        .card-header {
+            background-color: #667eea; /* Un colore primario gradevole */
+            color: white;
+            font-weight: 500;
+            border-bottom: none;
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+        }
+         .card-header i {
+            margin-right: 0.5rem;
+        }
+
+        h1.page-title { /* Stile per il titolo principale della pagina se necessario */
             text-align: center;
-            color: #333;
-            font-size: 1.8rem;
+            color: #343a40;
+            font-size: 2rem;
+            margin-bottom: 2rem;
         }
 
-        h3 {
-            font-size: 1.4rem;
-            margin-top: 1rem;
+        .table th {
+            font-weight: 500; /* Testo delle intestazioni tabella meno pesante */
+            color: #495057;
         }
 
-        .section-divider {
-            margin: 20px 0;
-            border-top: 2px solid #eee;
+        .btn-primary {
+            background-color: #667eea;
+            border-color: #667eea;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
         }
 
-        /* Responsive table styles */
+        .btn-primary:hover {
+            background-color: #5a6fd0;
+            border-color: #5a6fd0;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+        }
+         .btn-danger:hover {
+            background-color: #c82333;
+            border-color: #bd2130;
+        }
+
+        .btn-info {
+            background-color: #17a2b8;
+            border-color: #17a2b8;
+        }
+        .btn-info:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+        }
+
+
+        /* Stili responsive per tabelle (già presenti, ma verificati) */
         @media screen and (max-width: 768px) {
             .table-responsive-custom {
                 display: block;
@@ -47,142 +97,188 @@
                 -webkit-overflow-scrolling: touch;
             }
 
-            .table-stack {
-                display: block;
-            }
-
-            .table-stack thead {
-                display: none;
-            }
-
+            .table-stack { display: block; }
+            .table-stack thead { display: none; }
             .table-stack tr {
                 display: block;
-                border: 1px solid #ddd;
+                border: 1px solid #dee2e6;
                 margin-bottom: 1rem;
                 background: #fff;
-                border-radius: 4px;
-                padding: 0.5rem;
+                border-radius: 0.5rem; /* Angoli arrotondati per le righe stack */
+                padding: 0.75rem;
+                box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075);
             }
-
             .table-stack td {
                 display: block;
                 text-align: right;
-                padding: 0.5rem;
+                padding: 0.5rem 0.75rem;
                 border: none;
+                border-bottom: 1px solid #f1f1f1; /* Separatore leggero tra i campi */
             }
-
+            .table-stack td:last-child {
+                border-bottom: none;
+            }
             .table-stack td::before {
                 content: attr(data-label);
                 float: left;
-                font-weight: bold;
+                font-weight: 600; /* Etichette più evidenti */
+                color: #495057;
             }
         }
 
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+        #booking-form {
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
         }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
+        #booking-form h3 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #343a40;
+        }
+        .user-welcome-text {
+            color: #ffffff !important; /* Assicura che il testo sia bianco sulla navbar scura */
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h1>Car Booking System</h1>
-    <p class="text-center">Prenota un auto senza avere bisogno di aspettare la disponibilità</p>
 
-    <div id="car-list">
-        <h3>Auto Disponibili</h3>
-        <div class="table-responsive-custom">
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Posti a Sedere</th>
-                    <th>Stato</th>
-                    <th>Prossima Prenotazione</th>
-                    <th>Azione</th>
-                </tr>
-                </thead>
-                <tbody id="car-table-body">
-                </tbody>
-            </table>
+<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #343a40;">
+    <div class="container-fluid">
+        <a class="navbar-brand" th:href="@{/}"><i class="fas fa-car-side me-2"></i>Car Booking</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavDropdown">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link active" aria-current="page" th:href="@{/}"><i class="fas fa-home me-1"></i>Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:href="@{/statistics.html}"><i class="fas fa-chart-line me-1"></i>Statistiche</a>
+                </li>
+            </ul>
+            <div th:if="${#authentication != null && #authentication.principal != null}" class="d-flex align-items-center">
+                <span class="navbar-text me-3 user-welcome-text" th:if="${userFirstName != null}">
+                    Bentornato, <span th:text="${userFirstName}" class="fw-semibold"></span>!
+                </span>
+                <span class="navbar-text me-3 user-welcome-text" th:unless="${userFirstName != null}">
+                    Bentornato!
+                </span>
+                <form th:action="@{/perform_logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-light btn-sm"><i class="fas fa-sign-out-alt me-1"></i>Logout</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container-main">
+    <!-- Titolo pagina rimosso, il brand della navbar è sufficiente -->
+    <!-- <h1 class="page-title">Car Booking System</h1> -->
+
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-car"></i>Auto Disponibili
+        </div>
+        <div class="card-body">
+            <div class="table-responsive-custom">
+                <table class="table table-hover table-striped"> <!-- Aggiunto table-hover -->
+                    <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Posti</th>
+                        <th>Stato</th>
+                        <th>Prossima Prenotazione</th>
+                        <th>Azione</th>
+                    </tr>
+                    </thead>
+                    <tbody id="car-table-body">
+                    <!-- Contenuto caricato da JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="section-divider"></div>
-
-    <div id="occupied-cars">
-        <h3>Auto Attualmente Occupate</h3>
-        <div class="table-responsive-custom">
-            <table class="table table-striped table-stack">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Prenotato Da</th>
-                    <th>Data Inizio</th>
-                    <th>Data Fine</th>
-                    <th>Durata</th>
-                    <th>Motivazione</th>
-                    <th>Azioni</th>
-                </tr>
-                </thead>
-                <tbody id="occupied-cars-body">
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-header">
+           <i class="fas fa-business-time"></i>Auto Attualmente Occupate
+        </div>
+        <div class="card-body">
+            <div class="table-responsive-custom">
+                <table class="table table-hover table-striped table-stack">
+                    <thead>
+                    <tr>
+                        <th>Nome Auto</th>
+                        <th>Prenotato Da</th>
+                        <th>Inizio</th>
+                        <th>Fine</th>
+                        <th>Durata</th>
+                        <th>Motivazione</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody id="occupied-cars-body">
+                    <!-- Contenuto caricato da JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="section-divider"></div>
-
-    <div id="future-bookings">
-        <h3>Auto Prenotate</h3>
-        <div class="table-responsive-custom">
-            <table class="table table-striped table-stack">
-                <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Prenotato Da</th>
-                    <th>Data Prenotazione</th>
-                    <th>Data Inizio</th>
-                    <th>Data Fine</th>
-                    <th>Durata</th>
-                    <th>Motivazione</th>
-                    <th>Azioni</th>
-                </tr>
-                </thead>
-                <tbody id="future-bookings-body">
-                </tbody>
-            </table>
+    <div class="card">
+        <div class="card-header">
+            <i class="fas fa-calendar-alt"></i>Prenotazioni Future
+        </div>
+        <div class="card-body">
+            <div class="table-responsive-custom">
+                <table class="table table-hover table-striped table-stack">
+                    <thead>
+                    <tr>
+                        <th>Nome Auto</th>
+                        <th>Prenotato Da</th>
+                        <th>Data Pren.</th>
+                        <th>Inizio</th>
+                        <th>Fine</th>
+                        <th>Durata</th>
+                        <th>Motivazione</th>
+                        <th>Azioni</th>
+                    </tr>
+                    </thead>
+                    <tbody id="future-bookings-body">
+                    <!-- Contenuto caricato da JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div id="booking-form" style="display: none;" class="mt-4">
-        <h3>Prenota Auto</h3>
-        <form id="booking-form-data" class="mt-4">
+    <div id="booking-form" style="display: none;" class="mt-5 mb-5"> <!-- Aggiunto mt-5 mb-5 per spaziatura -->
+        <h3><i class="fas fa-edit me-2"></i>Prenota Auto</h3>
+        <form id="booking-form-data" class="mt-3">
+            <!-- Il div per existing-bookings verrà inserito qui da JS -->
             <div class="mb-3">
-                <label for="name" class="form-label">Nome:</label>
-                <select class="form-select" id="name" required>
-                    <option value="">Seleziona una persona</option>
-                    <option value="Mamma">Mamma</option>
-                    <option value="Papà">Papà</option>
-                    <option value="Jordi">Jordi</option>
-                    <option value="Enrico">Enrico</option>
-                    <option value="Sergio">Sergio</option>
+                <label for="name" class="form-label">Nome (obsoleto, l'utente è autenticato):</label>
+                 <!-- Questo campo 'name' per selezionare l'utente che prenota è ora obsoleto
+                      dato che l'utente è autenticato. Verrà usato l'utente loggato.
+                      Potrebbe essere rimosso o nascosto se non serve per altri scopi.
+                      Per ora lo lascio ma segnalo che la logica di booking userà l'utente autenticato. -->
+                <select class="form-select" id="name" disabled> <!-- Disabilitato per ora -->
+                    <option value="" th:text="${userFirstName != null ? userFirstName : 'Utente Corrente'}"></option>
                 </select>
             </div>
 
-            <div class="mb-3">
-                <label for="startDateTime" class="form-label">Data e Ora di Inizio:</label>
-                <input type="datetime-local" class="form-control" id="startDateTime" required>
-            </div>
-
-            <div class="mb-3">
-                <label for="endDateTime" class="form-label">Data e Ora di Fine:</label>
-                <input type="datetime-local" class="form-control" id="endDateTime" required>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="startDateTime" class="form-label">Data e Ora di Inizio:</label>
+                    <input type="datetime-local" class="form-control" id="startDateTime" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="endDateTime" class="form-label">Data e Ora di Fine:</label>
+                    <input type="datetime-local" class="form-control" id="endDateTime" required>
+                </div>
             </div>
 
             <div class="mb-3">
@@ -190,7 +286,7 @@
                 <select class="form-select" id="reasonType" required onchange="toggleCustomReason()">
                     <option value="">Seleziona una motivazione</option>
                     <option value="Lavoro">Lavoro</option>
-                    <option value="Sporting">Sport</option>
+                    <option value="Sport">Sport</option> <!-- Corretto "Sporting" -->
                     <option value="Scuola">Scuola</option>
                     <option value="Famiglia">Famiglia</option>
                     <option value="Viaggio">Viaggio</option>
@@ -199,13 +295,13 @@
             </div>
 
             <div class="mb-3" id="customReasonDiv" style="display: none;">
-                <label for="customReason" class="form-label">Specifica Motivazione:</label>
+                <label for="customReason" class="form-label">Specifica Motivazione (se "Altro"):</label>
                 <textarea class="form-control" id="customReason" rows="3"></textarea>
             </div>
 
-            <div class="d-grid gap-2 d-md-flex">
-                <button type="submit" class="btn btn-primary">Conferma Prenotazione</button>
-                <button type="button" class="btn btn-secondary" onclick="hideBookingForm()">Annulla</button>
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <button type="button" class="btn btn-secondary" onclick="app.ui.hideBookingForm()"><i class="fas fa-times me-2"></i>Annulla</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-check me-2"></i>Conferma Prenotazione</button>
             </div>
         </form>
     </div>
@@ -284,7 +380,9 @@
                 occupiedCarsBody: document.getElementById('occupied-cars-body'),
                 futureBookingsBody: document.getElementById('future-bookings-body'),
                 bookingForm: document.getElementById('booking-form'),
-                bookingFormData: document.getElementById('booking-form-data')
+                bookingFormData: document.getElementById('booking-form-data'),
+                // Aggiungi qui altri elementi se necessario, es. il campo nome utente nel form se vuoi popolarlo
+                nameSelectInForm: document.getElementById('name')
             };
 
             return Object.values(this.elements).every(element => element !== null);
@@ -400,14 +498,27 @@
             this.state.elements.bookingForm.style.display = "block";
 
             const now = new Date();
-            const localISOTime = now.toISOString().slice(0, 16);
+            const localISOTime = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
 
             const startInput = document.getElementById("startDateTime");
             const endInput = document.getElementById("endDateTime");
             startInput.min = localISOTime;
-            startInput.value = localISOTime;
+            startInput.value = localISOTime; // Default a ora corrente arrotondata
+
+            // Default per endDateTime: un'ora dopo startDateTime
+            const defaultEndDate = new Date(now.getTime());
+            defaultEndDate.setHours(defaultEndDate.getHours() + 1);
+            const localISOEndTime = new Date(defaultEndDate.getTime() - (defaultEndDate.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
             endInput.min = localISOTime;
-            endInput.value = localISOTime;
+            endInput.value = localISOEndTime;
+
+
+            // Popola il campo nome (ora disabilitato) con l'utente loggato, se disponibile
+            if (this.state.elements.nameSelectInForm && currentAuthenticatedUser.firstName) {
+                 // this.state.elements.nameSelectInForm.value = currentAuthenticatedUser.firstName; // Non funziona con select
+                 // Se vuoi mostrare il nome, potresti cambiare il select in un input disabilitato o testo statico
+            }
+
 
             this.renderExistingBookings();
             this.state.elements.bookingForm.scrollIntoView({behavior: 'smooth'});
@@ -482,15 +593,15 @@
             bookings.forEach(booking => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                <td data-label="Nome">${booking.car.name}</td>
-                <td data-label="Prenotato Da">${booking.bookedByName}</td>
-                <td data-label="Data Inizio">${formatDate(booking.startDateTime)}</td>
-                <td data-label="Data Fine">${formatDate(booking.endDateTime)}</td>
+                <td data-label="Nome Auto">${booking.car.name}</td>
+                <td data-label="Prenotato Da">${booking.bookedByUsername || 'N/D'}</td> <!-- MODIFICATO e aggiunto fallback -->
+                <td data-label="Inizio">${formatDate(booking.startDateTime)}</td>
+                <td data-label="Fine">${formatDate(booking.endDateTime)}</td>
                 <td data-label="Durata">${formatDuration(booking.duration)}</td>
                 <td data-label="Motivazione">${booking.reason}</td>
                 <td data-label="Azioni">
-                    <button class="btn btn-danger btn-sm" onclick="app.handleBookingAction(${booking.id}, true)">
-                        Termina
+                    <button class="btn btn-danger btn-sm" onclick="app.handleBookingAction(${booking.id}, true)" title="Termina Prenotazione">
+                        <i class="fas fa-stop-circle"></i> Termina
                     </button>
                 </td>
             `;
@@ -507,16 +618,16 @@
             bookings.forEach(booking => {
                 const row = document.createElement("tr");
                 row.innerHTML = `
-                <td data-label="Nome">${booking.car.name}</td>
-                <td data-label="Prenotato Da">${booking.bookedByName}</td>
-                <td data-label="Data Prenotazione">${formatDate(booking.bookedAt)}</td>
-                <td data-label="Data Inizio">${formatDate(booking.startDateTime)}</td>
-                <td data-label="Data Fine">${formatDate(booking.endDateTime)}</td>
+                <td data-label="Nome Auto">${booking.car.name}</td>
+                <td data-label="Prenotato Da">${booking.bookedByUsername || 'N/D'}</td> <!-- MODIFICATO e aggiunto fallback -->
+                <td data-label="Data Pren.">${formatDate(booking.bookedAt)}</td>
+                <td data-label="Inizio">${formatDate(booking.startDateTime)}</td>
+                <td data-label="Fine">${formatDate(booking.endDateTime)}</td>
                 <td data-label="Durata">${formatDuration(booking.duration)}</td>
                 <td data-label="Motivazione">${booking.reason}</td>
                 <td data-label="Azioni">
-                    <button class="btn btn-danger btn-sm" onclick="app.handleBookingAction(${booking.id}, false)">
-                        Annulla
+                    <button class="btn btn-warning btn-sm text-dark" onclick="app.handleBookingAction(${booking.id}, false)" title="Annulla Prenotazione">
+                         <i class="fas fa-ban"></i> Annulla
                     </button>
                 </td>
             `;

@@ -8,6 +8,7 @@ import me.enrico.carbooking.model.User; // Aggiungi import
 import me.enrico.carbooking.repositories.BookingRepository;
 import me.enrico.carbooking.request.CarBookingRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional; // Assicurati che sia importato
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId; // Assicurati che sia importato

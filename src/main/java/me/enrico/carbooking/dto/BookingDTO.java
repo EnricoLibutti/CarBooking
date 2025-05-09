@@ -9,7 +9,8 @@ import java.time.LocalDateTime;
 public class BookingDTO {
     private Long id;
     private CarDTO car;
-    private String bookedByName;
+    // private String bookedByName; // Rimosso
+    private String bookedByUsername; // Aggiunto
     private LocalDateTime bookedAt;
     private LocalDateTime startDateTime;
     private LocalDateTime endDateTime;
