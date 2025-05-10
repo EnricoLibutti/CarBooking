@@ -25,6 +25,9 @@ public class User implements UserDetails {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @Column(nullable = false, unique = true) // Aggiunta per l'email
+    private String email; // Nuovo campo per l'indirizzo email
+
     @Column(nullable = false)
     private String password;
 
@@ -42,8 +45,9 @@ public class User implements UserDetails {
     private boolean credentialsNonExpired = true;
     private boolean enabled = true;
 
-    public User(String username, String password, String firstName, String lastName, Set<Role> roles) {
+    public User(String username, String email, String password, String firstName, String lastName, Set<Role> roles) { // Aggiunto parametro email
         this.username = username;
+        this.email = email; // Imposta l'email
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;

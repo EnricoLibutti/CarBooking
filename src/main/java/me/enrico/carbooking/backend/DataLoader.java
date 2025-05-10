@@ -31,6 +31,7 @@ public class DataLoader {
             if (userRepository.count() == 0) {
                 User enrico = new User(
                         "enrico",
+                        "zrageyh@gmail.com", // Aggiunto email
                         passwordEncoder.encode("enrico"),
                         "Enrico",
                         "Libutti",
@@ -40,6 +41,7 @@ public class DataLoader {
 
                 User claudio = new User(
                         "claudio",
+                        "claudiolibutti@gmail.com", // Aggiunto email
                         passwordEncoder.encode("pippo123"), // Codifica la password
                         "Claudio",
                         "Libutti",
@@ -50,6 +52,7 @@ public class DataLoader {
                 // Aggiungi altri membri della famiglia come utenti
                 User jordi = new User(
                         "jordi",
+                        "libuttijordi@gmail.com", // Aggiunto email
                         passwordEncoder.encode("password123"),
                         "Jordi",
                         "Libutti",
@@ -59,6 +62,7 @@ public class DataLoader {
 
                 User sergio = new User(
                         "sergio",
+                        "ser", // Aggiunto email
                         passwordEncoder.encode("password123"),
                         "Sergio",
                         "Libutti",

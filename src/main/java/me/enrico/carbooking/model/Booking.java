@@ -31,6 +31,7 @@ public class Booking {
     private int duration; // in ore
     private String reason;
     private boolean active = true;
+    private boolean reminderSent = false; // Nuovo campo
 
     public boolean overlaps(LocalDateTime start, LocalDateTime end) {
         // Controlla se this.startDateTime e this.endDateTime sono nulli prima di chiamare isBefore/isAfter
@@ -50,4 +51,12 @@ public class Booking {
     // public UserInfo getUserInfo() {
     //     return user != null ? new UserInfo(user.getId(), user.getUsername(), user.getFirstName(), user.getLastName()) : null;
     // }
+
+    public boolean isReminderSent() {
+        return reminderSent;
+    }
+
+    public void setReminderSent(boolean reminderSent) {
+        this.reminderSent = reminderSent;
+    }
 }

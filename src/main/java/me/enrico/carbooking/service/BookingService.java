@@ -20,17 +20,19 @@ import java.time.temporal.ChronoUnit; // Aggiungi import
 public class BookingService {
 
     private final BookingRepository bookingRepository;
-    // private final CarRepository carRepository; // Non sembra essere usato qui direttamente
+    private final EmailService emailService; // Assicurati che sia iniettato
     private static final ZoneId ROME_ZONE = ZoneId.of("Europe/Rome");
+    // Aggiungi un logger se vuoi loggare errori di invio email da questo service
+    // private static final Logger logger = LoggerFactory.getLogger(BookingService.class);
 
     @Transactional
-    public String createBooking(Car car, CarBookingRequest request, User currentUser) { // Aggiunto User currentUser
+    public Booking createBooking(Car car, CarBookingRequest request, User currentUser) { // Modificato tipo di ritorno da String a Booking
         validateBookingRequest(request);
         checkForOverlappingBookings(car.getId(), request);
 
         Booking booking = new Booking();
         booking.setCar(car);
-        booking.setUser(currentUser); // Imposta l'utente corrente
+        booking.setUser(currentUser);
         booking.setBookedAt(LocalDateTime.now(ROME_ZONE));
         booking.setStartDateTime(request.getStartDateTime());
         booking.setEndDateTime(request.getEndDateTime());
@@ -38,11 +40,19 @@ public class BookingService {
         booking.setReason(request.getReason());
         booking.setActive(true);
 
-        bookingRepository.save(booking);
+        Booking savedBooking = bookingRepository.save(booking);
 
-        // Aggiorna il messaggio per includere il nome dell'utente se disponibile
-        String userName = (currentUser != null && currentUser.getFirstName() != null) ? currentUser.getFirstName() : currentUser.getUsername();
-        return String.format("%s, hai prenotato con successo l'auto %s!", userName, car.getName());
+        // Invia email di conferma
+        try {
+            // EmailService.sendBookingConfirmationEmail gestisce già i log per utente/email nulli
+            emailService.sendBookingConfirmationEmail(savedBooking);
+        } catch (Exception e) {
+            // Logga l'errore se l'invio dell'email fallisce, ma non interrompere il processo di prenotazione
+            // logger.error("ATTENZIONE: Prenotazione ID {} creata, ma email di conferma non inviata. Errore: {}", savedBooking.getId(), e.getMessage(), e);
+            // L'EmailService dovrebbe già loggare i suoi errori interni.
+        }
+
+        return savedBooking; // Restituisce l'oggetto Booking salvato
     }
 
     private void validateBookingRequest(CarBookingRequest request) {

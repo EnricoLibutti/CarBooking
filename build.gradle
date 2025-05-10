@@ -28,6 +28,7 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 	implementation 'org.springframework.boot:spring-boot-starter-security' // <-- Aggiunta
 	implementation 'org.thymeleaf.extras:thymeleaf-extras-springsecurity6' // <-- Aggiunta
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
 
 }
 

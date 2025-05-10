@@ -17,4 +17,10 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     @Query("SELECT b FROM Booking b WHERE b.car.id = :carId AND b.active = true")
     List<Booking> findByCarIdAndActiveTrue(@Param("carId") Long carId);
+
+    @Query("SELECT b FROM Booking b WHERE b.active = true AND b.reminderSent = false AND b.startDateTime >= :windowStart AND b.startDateTime < :windowEnd")
+    List<Booking> findActiveBookingsForReminder(
+            @Param("windowStart") LocalDateTime windowStart,
+            @Param("windowEnd") LocalDateTime windowEnd
+    );
 }
