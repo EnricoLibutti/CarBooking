@@ -89,7 +89,7 @@ public class EmailService {
         model.put("reason", booking.getReason());
 
         sendHtmlEmail(user.getEmail(),
-                "Conferma Prenotazione Auto - ID: " + booking.getId(),
+                "Conferma Prenotazione Auto",
                 "booking-confirmation.html",
                 model);
     }
@@ -112,7 +112,7 @@ public class EmailService {
         model.put("reasonForChange", reasonForChange);
 
         sendHtmlEmail(user.getEmail(),
-                "Notifica Modifica Prenotazione Auto - ID: " + booking.getId(),
+                "Modifica Prenotazione Auto",
                 "booking-cancellation.html",
                 model);
     }
@@ -135,7 +135,7 @@ public class EmailService {
         model.put("endTime", booking.getEndDateTime());
 
         sendHtmlEmail(user.getEmail(),
-                "Promemoria Prenotazione Auto - ID: " + booking.getId(),
+                "Promemoria Prenotazione Auto",
                 "booking-reminder.html",
                 model);
     }

@@ -4,33 +4,33 @@
     <meta charset="UTF-8">
     <title th:text="${subject}"></title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
-        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
-        .header { background-color: #ffc107; color: #333; padding: 20px; text-align: center; }
-        .header h1 { margin: 0; font-size: 24px; }
-        .content { padding: 20px; }
-        .content h2 { color: #0056b3; font-size: 20px; }
-        .content p { line-height: 1.6; margin-bottom: 15px; }
-        .booking-details { background-color: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .booking-details ul { list-style: none; padding: 0; }
-        .booking-details li { margin-bottom: 8px; }
-        .booking-details strong { color: #0056b3; }
-        .footer { background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 0.9em; color: #777; border-top: 1px solid #ddd; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4; color: #333; }
+        .email-container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background-color: #ffc107; color: #333; padding: 25px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .content { padding: 30px; }
+        .content h2 { color: #0056b3; font-size: 20px; margin-top: 0; }
+        .content p { line-height: 1.7; margin-bottom: 15px; font-size: 16px; }
+        .booking-details { background-color: #f9f9f9; padding: 20px; border-radius: 5px; margin-bottom: 25px; border-left: 4px solid #ffc107; }
+        .booking-details h3 { margin-top: 0; color: #0056b3; font-size: 18px; }
+        .booking-details ul { list-style: none; padding: 0; margin: 15px 0 0; }
+        .booking-details li { margin-bottom: 12px; display: flex; }
+        .booking-details strong { color: #0056b3; min-width: 100px; display: inline-block; }
+        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; font-size: 14px; color: #777; border-top: 1px solid #ddd; }
     </style>
 </head>
 <body>
     <div class="email-container">
         <div class="header">
-            <h1 th:text="${subject}">Promemoria Prenotazione</h1>
+            <h1>Promemoria Prenotazione</h1>
         </div>
         <div class="content">
             <h2>Ciao <span th:text="${userName}">Utente</span>,</h2>
-            <p>Questo è un promemoria per la tua imminente prenotazione dell'auto '<strong th:text="${carName}">Nome Auto</strong>'.</p>
+            <p>Ti ricordiamo la tua imminente prenotazione dell'auto '<strong th:text="${carName}">Nome Auto</strong>'.</p>
             
             <div class="booking-details">
-                <h3>Dettagli della Prenotazione:</h3>
+                <h3>Dettagli della Prenotazione</h3>
                 <ul>
-                    <li><strong>ID Prenotazione:</strong> <span th:text="${bookingId}">#ID</span></li>
                     <li><strong>Auto:</strong> <span th:text="${carName}">Nome Auto</span></li>
                     <li><strong>Inizio:</strong> <span th:text="${#temporals.format(startTime, 'dd/MM/yyyy HH:mm')}">Data Inizio</span></li>
                     <li><strong>Fine:</strong> <span th:text="${#temporals.format(endTime, 'dd/MM/yyyy HH:mm')}">Data Fine</span></li>
@@ -38,7 +38,7 @@
             </div>
             
             <p>Ti aspettiamo!</p>
-            <p>Il Team CarBooking</p>
+            <p>Cordiali saluti,<br/>Il Team CarBooking</p>
         </div>
         <div class="footer">
             <p>&copy; <span th:text="${#dates.year(#dates.createNow())}">Anno</span> CarBooking. Tutti i diritti riservati.</p>
