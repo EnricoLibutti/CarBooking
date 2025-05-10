@@ -129,7 +129,7 @@ public class EmailService {
 
         Map<String, Object> model = new HashMap<>();
         model.put("userName", getUserName(user));
-        model.put("bookingId", booking.getId());
+        model.put("bookingId", booking.getId()); // bookingId è nel model ma non usato nel template attuale
         model.put("carName", booking.getCar().getName());
         model.put("startTime", booking.getStartDateTime());
         model.put("endTime", booking.getEndDateTime());
@@ -137,42 +137,6 @@ public class EmailService {
         sendHtmlEmail(user.getEmail(),
                 "Promemoria Prenotazione Auto",
                 "booking-reminder.html",
-                model);
-    }
-
-    /**
-     * Invia un'email per la reimpostazione della password.
-     */
-    public void sendPasswordResetEmail(User user, String resetToken) {
-        if (user == null || user.getEmail() == null) {
-            logger.error("Impossibile inviare email di reset password: utente o email utente non specificati.");
-            return;
-        }
-
-        String baseUrl = "https://carbooking.libuttienrico.it"; // TODO: Rendere configurabile
-        String resetUrl = baseUrl + "/reset-password?token=" + resetToken;
-
-        Map<String, Object> model = new HashMap<>();
-        model.put("userName", getUserName(user));
-        model.put("resetToken", resetToken);
-        model.put("resetUrl", resetUrl);
-
-        sendHtmlEmail(user.getEmail(),
-                "Richiesta di Reset Password",
-                "password-reset.html",
-                model);
-    }
-
-    /**
-     * Invia un'email di test per verificare la configurazione
-     */
-    public void sendTestEmail(String to, String name) {
-        Map<String, Object> model = new HashMap<>();
-        model.put("userName", name != null ? name : "Utente");
-
-        sendHtmlEmail(to,
-                "CarBooking - Email di Test",
-                "test-email.html",
                 model);
     }
 }

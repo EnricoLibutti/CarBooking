@@ -2,6 +2,7 @@ package me.enrico.carbooking.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
 import me.enrico.carbooking.model.Booking;
 import me.enrico.carbooking.model.Car;
 import me.enrico.carbooking.model.User; // Aggiungi import
@@ -48,7 +49,7 @@ public class BookingService {
             emailService.sendBookingConfirmationEmail(savedBooking);
         } catch (Exception e) {
             // Logga l'errore se l'invio dell'email fallisce, ma non interrompere il processo di prenotazione
-            // logger.error("ATTENZIONE: Prenotazione ID {} creata, ma email di conferma non inviata. Errore: {}", savedBooking.getId(), e.getMessage(), e);
+         //   logger.error("ATTENZIONE: Prenotazione ID {} creata, ma email di conferma non inviata. Errore: {}", savedBooking.getId(), e.getMessage(), e);
             // L'EmailService dovrebbe già loggare i suoi errori interni.
         }
 
