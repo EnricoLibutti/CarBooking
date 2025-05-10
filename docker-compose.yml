@@ -1,14 +1,62 @@
-version: '3.8'
-
 services:
   app:
-    image: stackoverrage/carbooking:latest
+    build: stackoverrage/carbooking-app
     container_name: carbooking-app
-    restart: always
     ports:
-      - "8081:8081"
+      - "${APP_PORT_CONTAINER}:${APP_PORT_CONTAINER}" # Mappa la porta dell'host alla porta del container
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://192.168.1.28:3306/carbooking?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      - SPRING_DATASOURCE_USERNAME=enrico
-      - SPRING_DATASOURCE_PASSWORD=enrico
-    network_mode: "host"
+      # Passa tutte le variabili dal .env all'applicazione
+      - APP_PORT_CONTAINER=${APP_PORT_CONTAINER}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - SMTP_AUTH=${SMTP_AUTH}
+      - SMTP_STARTTLS_ENABLE=${SMTP_STARTTLS_ENABLE}
+      - SMTP_STARTTLS_REQUIRED=${SMTP_STARTTLS_REQUIRED}
+      - SMTP_SSL_TRUST=${SMTP_SSL_TRUST}
+      - SMTP_LOCALHOST_CONFIG=${SMTP_LOCALHOST_CONFIG}
+    depends_on:
+      db:
+        condition: service_healthy # Aspetta che il database sia segnalato come 'healthy'
+    networks:
+      - carbooking-network
+    restart: on-failure:3 # Riavvia l'app fino a 3 volte in caso di errore
+
+  db:
+    image: mysql:8.0 # Immagine MySQL ufficiale
+    container_name: carbooking-db
+    command: >
+      --authentication-policy=caching_sha2_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${DB_EXTERNAL_PORT}:${DB_INTERNAL_PORT}" # Mappa la porta MySQL per accesso esterno
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: enrico
+      MYSQL_PASSWORD: enrico
+    volumes:
+      - mysql_data:/var/lib/mysql # Persistenza dei dati del database
+      - ./mysql-init:/docker-entrypoint-initdb.d # Script di inizializzazione
+    networks:
+      - carbooking-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_PASSWORD}"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 10s # Concede tempo a MySQL per avviarsi prima di iniziare i controlli
+
+volumes:
+  mysql_data: # Volume per la persistenza dei dati MySQL
+
+networks:
+  carbooking-network:
+    driver: bridge
